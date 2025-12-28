@@ -3,225 +3,720 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TinLink - Shorten Your URLs</title>
+    <title>URL Shortener - Link Simplifier</title>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700;900&family=Libre+Franklin:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Libre Franklin', sans-serif;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            color: #333;
+            background: #f5e6d3;
+            color: #1a1a1a;
+            position: relative;
         }
 
-        .main-card {
-            background: white;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            max-width: 500px;
+            height: 100%;
+            background-image: 
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(0, 0, 0, 0.02) 2px,
+                    rgba(0, 0, 0, 0.02) 4px
+                );
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .ink-splatter {
+            position: fixed;
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle, rgba(26, 26, 26, 0.08), transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .splatter1 {
+            top: 10%;
+            left: 5%;
+            width: 80px;
+            height: 80px;
+        }
+
+        .splatter2 {
+            bottom: 15%;
+            right: 8%;
+            width: 100px;
+            height: 100px;
+        }
+
+        .container {
+            background: #faf7f0;
+            border: 3px solid #1a1a1a;
+            box-shadow: 
+                0 8px 16px rgba(0, 0, 0, 0.15),
+                inset 0 0 60px rgba(139, 69, 19, 0.03);
+            max-width: 650px;
+            width: 90%;
+            padding: 50px 45px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .container::before,
+        .container::after {
+            content: '';
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 3px solid #c41e3a;
+        }
+
+        .container::before {
+            top: 15px;
+            left: 15px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .container::after {
+            bottom: 15px;
+            right: 15px;
+            border-left: none;
+            border-top: none;
+        }
+
+        .header {
             text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 3px double #1a1a1a;
+            padding-bottom: 25px;
+        }
+
+        .logo {
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+
+        .logo-icon {
+            font-size: 3em;
         }
 
         h1 {
-            color: #4a4a4a;
-            margin-bottom: 10px;
-            font-size: 2.2em;
+            font-family: 'Merriweather', serif;
+            color: #1a1a1a;
+            font-size: 3.2em;
+            font-weight: 900;
+            letter-spacing: -1px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
         }
 
-        p.subtitle {
-            color: #888;
-            margin-bottom: 30px;
+        .subtitle {
+            color: #4a4a4a;
+            font-size: 1em;
+            font-weight: 400;
+            font-style: italic;
+            letter-spacing: 0.5px;
+        }
+
+        .toggle-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 35px;
+            border: 2px solid #1a1a1a;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            font-size: 1em;
+            font-weight: 700;
+            cursor: pointer;
+            background: transparent;
+            color: #1a1a1a;
+            font-family: 'Libre Franklin', sans-serif;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-right: 2px solid #1a1a1a;
+        }
+
+        .toggle-btn:last-child {
+            border-right: none;
+        }
+
+        .toggle-btn:hover {
+            background: rgba(196, 30, 58, 0.05);
+        }
+
+        .toggle-btn.active {
+            background: #c41e3a;
+            color: #faf7f0;
         }
 
         .input-group {
-            margin-bottom: 20px;
-            text-align: left;
+            margin-bottom: 25px;
         }
 
         label {
             display: block;
-            margin-bottom: 8px;
-            color: #555;
-            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+            font-weight: 700;
             font-size: 0.9em;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-family: 'Merriweather', serif;
         }
 
-        input {
+        input, select {
             width: 100%;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-
-        input:focus {
-            border-color: #667eea;
+            padding: 14px 16px;
+            border: 2px solid #1a1a1a;
+            background: #ffffff;
+            color: #1a1a1a;
+            font-size: 1em;
             outline: none;
+            font-family: 'Libre Franklin', sans-serif;
+            transition: all 0.2s ease;
         }
 
-        button {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 1.1em;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+        input::placeholder {
+            color: rgba(26, 26, 26, 0.4);
+            font-style: italic;
         }
 
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        input:focus, select:focus {
+            border-color: #c41e3a;
+            box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.1);
         }
 
-        .result-container {
-            margin-top: 30px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            display: none; /* Hidden by default */
-            border: 1px solid #e9ecef;
+        .custom-alias, .expiry-section {
+            display: none;
         }
 
-        .result-link {
+        .custom-alias.show, .expiry-section.show {
             display: block;
-            margin: 10px 0;
-            color: #667eea;
-            font-weight: bold;
-            word-break: break-all;
-            text-decoration: none;
-            font-size: 1.1em;
+            animation: slideDown 0.3s ease;
         }
 
-        .error-message {
-            color: #ff4757;
-            margin-top: 15px;
-            font-size: 0.9em;
-            display: none;
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        
-        .toggle-options {
-            color: #667eea;
-            font-size: 0.9em;
+
+        .expiry-option {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .expiry-option input[type="number"],
+        .expiry-option select {
+            flex: 1;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 25px;
             cursor: pointer;
-            margin-bottom: 20px;
-            display: inline-block;
         }
 
-        #advanced-options {
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #c41e3a;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 600;
+            text-transform: none;
+            font-family: 'Libre Franklin', sans-serif;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 18px;
+            border: 3px solid #1a1a1a;
+            font-size: 1.15em;
+            font-weight: 700;
+            cursor: pointer;
+            background: #c41e3a;
+            color: #faf7f0;
+            font-family: 'Merriweather', serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 0 #8b1426;
+        }
+
+        .btn:hover {
+            background: #a01829;
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #8b1426;
+        }
+
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        .result {
             display: none;
-            background: #f9f9f9;
-            padding: 15px;
-            border-radius: 10px;
+            margin-top: 35px;
+            padding: 30px;
+            background: #ffffff;
+            border: 3px solid #1a1a1a;
+            border-top: 5px solid #c41e3a;
+            animation: slideUp 0.3s ease;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-label {
+            color: #1a1a1a;
+            font-weight: 700;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-family: 'Merriweather', serif;
+        }
+
+        .result-url {
+            display: flex;
+            align-items: center;
+            gap: 12px;
             margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .result-url a {
+            flex: 1;
+            color: #c41e3a;
+            text-decoration: underline;
+            font-size: 1.1em;
+            font-weight: 600;
+            word-break: break-all;
+            transition: all 0.2s ease;
+            font-family: 'Libre Franklin', sans-serif;
+            min-width: 200px;
+        }
+
+        .result-url a:hover {
+            color: #8b1426;
+        }
+
+        .expiry-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff8dc;
+            border-left: 4px solid #c41e3a;
+            color: #1a1a1a;
+            font-weight: 600;
+            font-size: 0.95em;
+            font-style: italic;
+        }
+
+        .copy-btn, .new-btn {
+            padding: 12px 24px;
+            border: 2px solid #1a1a1a;
+            font-size: 0.9em;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: 'Libre Franklin', sans-serif;
+            transition: all 0.2s ease;
+            background: #faf7f0;
+            color: #1a1a1a;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .copy-btn:hover, .new-btn:hover {
+            background: #1a1a1a;
+            color: #faf7f0;
+        }
+
+        .copy-btn.copied {
+            background: #c41e3a;
+            color: #faf7f0;
+            border-color: #c41e3a;
+        }
+
+        .new-btn {
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .error {
+            color: #faf7f0;
+            background: #8b1426;
+            padding: 16px;
+            margin-top: 20px;
+            display: none;
+            font-weight: 700;
+            border: 2px solid #1a1a1a;
+            font-family: 'Merriweather', serif;
+            letter-spacing: 0.5px;
+        }
+
+        .error::before {
+            content: '⚠ NOTICE: ';
+            font-weight: 900;
+        }
+
+        .error.show {
+            display: block;
+            animation: shake 0.4s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 35px 25px;
+            }
+
+            h1 {
+                font-size: 2.5em;
+            }
+
+            .toggle-container {
+                flex-direction: column;
+            }
+
+            .toggle-btn {
+                border-right: none;
+                border-bottom: 2px solid #1a1a1a;
+            }
+
+            .toggle-btn:last-child {
+                border-bottom: none;
+            }
+
+            .result-url {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .result-url a {
+                min-width: auto;
+            }
         }
     </style>
 </head>
 <body>
+    <div class="ink-splatter splatter1"></div>
+    <div class="ink-splatter splatter2"></div>
 
-    <div class="main-card">
-        <h1>TinLink</h1>
-        <p class="subtitle">Shorten your links, expand your reach.</p>
-
-        <div class="input-group">
-            <input type="url" id="longUrl" placeholder="Paste your long link here..." required>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <span class="logo-icon">📰</span>
+            </div>
+            <h1>The Link Press</h1>
+            <p class="subtitle">Condensing URLs Since Today</p>
         </div>
 
-        <div class="toggle-options" onclick="toggleAdvanced()">+ Show Advanced Options</div>
+        <div class="toggle-container">
+            <button class="toggle-btn active" id="simpleBtn">Standard</button>
+            <button class="toggle-btn" id="customBtn">Custom Edition</button>
+        </div>
 
-        <div id="advanced-options">
+        <div id="formSection">
             <div class="input-group">
-                <label>Custom Alias (Optional)</label>
-                <input type="text" id="customAlias" placeholder="e.g., my-resume">
+                <label for="urlInput">Original URL</label>
+                <input type="text" id="urlInput" placeholder="https://example.com/very/long/url">
             </div>
+
+            <div class="input-group custom-alias" id="customAliasSection">
+                <label for="aliasInput">Custom Alias</label>
+                <input type="text" id="aliasInput" placeholder="my-custom-link">
             </div>
 
-        <button onclick="shortenUrl()">Shorten URL</button>
+            <div class="checkbox-group">
+                <input type="checkbox" id="enableExpiry">
+                <label for="enableExpiry">Set Link Expiration Date</label>
+            </div>
 
-        <p id="errorMessage" class="error-message"></p>
+            <div class="input-group expiry-section" id="expirySection">
+                <label>Expiration Method</label>
+                <select id="expiryType">
+                    <option value="time">Expire After Time Period</option>
+                    <option value="clicks">Expire After Click Count</option>
+                </select>
+                
+                <div class="expiry-option" id="timeExpiry" style="margin-top: 15px;">
+                    <input type="number" id="expiryValue" placeholder="Duration" min="1">
+                    <select id="timeUnit">
+                        <option value="minutes">Minutes</option>
+                        <option value="hours">Hours</option>
+                        <option value="days">Days</option>
+                    </select>
+                </div>
 
-        <div id="result" class="result-container">
-            <p>Your Short Link:</p>
-            <a href="#" id="shortLink" class="result-link" target="_blank">...</a>
-            <button onclick="copyToClipboard()" style="font-size: 0.9em; padding: 10px; background: #333;">Copy Link</button>
+                <div class="expiry-option" id="clickExpiry" style="margin-top: 15px; display: none;">
+                    <input type="number" id="maxClicks" placeholder="Maximum clicks" min="1">
+                </div>
+            </div>
+
+            <button class="btn" id="shortenBtn">Publish Short Link</button>
+
+            <div class="error" id="errorMsg"></div>
+        </div>
+
+        <div class="result" id="resultSection">
+            <div class="result-label">Published Short Link:</div>
+            <div class="result-url">
+                <a href="" target="_blank" id="shortUrl"></a>
+                <button class="copy-btn" id="copyBtn">Copy</button>
+            </div>
+
+            <div class="expiry-info" id="expiryInfo" style="display: none;"></div>
+
+            <button class="new-btn" id="newBtn">Create New Edition</button>
         </div>
     </div>
 
     <script>
-        //  UPDATE THIS URL TO YOUR RAILWAY BACKEND URL
-        const API_BASE_URL = "https://tin.up.railway.app"; 
+        // Backend API URL - Updated for production
+        const API_URL = 'tin.up.railway.app';
 
-        function toggleAdvanced() {
-            const options = document.getElementById('advanced-options');
-            options.style.display = options.style.display === 'block' ? 'none' : 'block';
+        const simpleBtn = document.getElementById('simpleBtn');
+        const customBtn = document.getElementById('customBtn');
+        const customAliasSection = document.getElementById('customAliasSection');
+        const shortenBtn = document.getElementById('shortenBtn');
+        const urlInput = document.getElementById('urlInput');
+        const aliasInput = document.getElementById('aliasInput');
+        const formSection = document.getElementById('formSection');
+        const resultSection = document.getElementById('resultSection');
+        const shortUrl = document.getElementById('shortUrl');
+        const copyBtn = document.getElementById('copyBtn');
+        const newBtn = document.getElementById('newBtn');
+        const errorMsg = document.getElementById('errorMsg');
+        const enableExpiry = document.getElementById('enableExpiry');
+        const expirySection = document.getElementById('expirySection');
+        const expiryType = document.getElementById('expiryType');
+        const timeExpiry = document.getElementById('timeExpiry');
+        const clickExpiry = document.getElementById('clickExpiry');
+        const expiryInfo = document.getElementById('expiryInfo');
+
+        let isCustomMode = false;
+
+        simpleBtn.addEventListener('click', () => {
+            isCustomMode = false;
+            simpleBtn.classList.add('active');
+            customBtn.classList.remove('active');
+            customAliasSection.classList.remove('show');
+            errorMsg.classList.remove('show');
+        });
+
+        customBtn.addEventListener('click', () => {
+            isCustomMode = true;
+            customBtn.classList.add('active');
+            simpleBtn.classList.remove('active');
+            customAliasSection.classList.add('show');
+            errorMsg.classList.remove('show');
+        });
+
+        enableExpiry.addEventListener('change', () => {
+            if (enableExpiry.checked) {
+                expirySection.classList.add('show');
+            } else {
+                expirySection.classList.remove('show');
+            }
+        });
+
+        expiryType.addEventListener('change', () => {
+            if (expiryType.value === 'time') {
+                timeExpiry.style.display = 'flex';
+                clickExpiry.style.display = 'none';
+            } else {
+                timeExpiry.style.display = 'none';
+                clickExpiry.style.display = 'flex';
+            }
+        });
+
+        function normalizeUrl(url) {
+            url = url.trim();
+            if (!url) return null;
+            
+            if (!url.match(/^https?:\/\//i)) {
+                if (url.startsWith('www.')) {
+                    url = 'http://' + url;
+                } else if (!url.includes('://')) {
+                    url = 'http://' + url;
+                }
+            }
+            
+            return url;
         }
 
-        async function shortenUrl() {
-            const longUrl = document.getElementById('longUrl').value;
-            const alias = document.getElementById('customAlias').value;
-            const errorMsg = document.getElementById('errorMessage');
-            const resultDiv = document.getElementById('result');
-            const shortLink = document.getElementById('shortLink');
+        function showError(message) {
+            errorMsg.textContent = message;
+            errorMsg.classList.add('show');
+            setTimeout(() => {
+                errorMsg.classList.remove('show');
+            }, 4000);
+        }
 
-            // Reset UI
-            errorMsg.style.display = 'none';
-            resultDiv.style.display = 'none';
-
-            if (!longUrl) {
-                showError("Please enter a URL");
+        shortenBtn.addEventListener('click', async () => {
+            const url = normalizeUrl(urlInput.value);
+            
+            if (!url) {
+                showError('A valid URL is required');
                 return;
             }
 
+            const alias = isCustomMode ? aliasInput.value.trim() : '';
+
+            if (isCustomMode && !alias) {
+                showError('Custom alias is required');
+                return;
+            }
+
+            const requestBody = { url, alias };
+
+            if (enableExpiry.checked) {
+                if (expiryType.value === 'time') {
+                    const value = parseInt(document.getElementById('expiryValue').value);
+                    const unit = document.getElementById('timeUnit').value;
+                    
+                    if (!value || value <= 0) {
+                        showError('Invalid expiration time');
+                        return;
+                    }
+                    
+                    requestBody.expiryType = 'time';
+                    requestBody.expiryValue = value;
+                    requestBody.expiryUnit = unit;
+                } else {
+                    const maxClicks = parseInt(document.getElementById('maxClicks').value);
+                    
+                    if (!maxClicks || maxClicks <= 0) {
+                        showError('Invalid click count');
+                        return;
+                    }
+                    
+                    requestBody.expiryType = 'clicks';
+                    requestBody.maxClicks = maxClicks;
+                }
+            }
+
             try {
-                const response = await fetch(`${API_BASE_URL}/shorten`, {
+                const response = await fetch(`${API_URL}/shorten`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        url: longUrl,
-                        alias: alias || undefined 
-                    })
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody),
                 });
 
                 const data = await response.json();
 
-                if (!response.ok) {
-                    throw new Error(data.error || 'Something went wrong');
+                if (response.ok) {
+                    const shortLink = `${API_URL}/${data.shortCode}`;
+                    shortUrl.href = shortLink;
+                    shortUrl.textContent = shortLink;
+                    formSection.style.display = 'none';
+                    resultSection.classList.add('show');
+                    
+                    if (data.expiryType) {
+                        expiryInfo.style.display = 'block';
+                        
+                        if (data.expiryType === 'time') {
+                            expiryInfo.innerHTML = `This link expires on ${new Date(data.expiresAt).toLocaleString()}`;
+                        } else if (data.expiryType === 'clicks') {
+                            expiryInfo.innerHTML = `This link expires after ${data.maxClicks} clicks`;
+                        }
+                    }
+                } else {
+                    showError(data.error || 'Publication failed');
                 }
-
-                // Success
-                shortLink.href = data.shortUrl;
-                shortLink.textContent = data.shortUrl;
-                resultDiv.style.display = 'block';
-
             } catch (error) {
-                showError(error.message);
+                showError('Unable to connect to service');
             }
-        }
+        });
 
-        function showError(msg) {
-            const el = document.getElementById('errorMessage');
-            el.textContent = msg;
-            el.style.display = 'block';
-        }
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(shortUrl.textContent);
+            copyBtn.textContent = '✓ Copied';
+            copyBtn.classList.add('copied');
+            setTimeout(() => {
+                copyBtn.textContent = 'Copy';
+                copyBtn.classList.remove('copied');
+            }, 2000);
+        });
 
-        function copyToClipboard() {
-            const url = document.getElementById('shortLink').textContent;
-            navigator.clipboard.writeText(url);
-            alert("Copied to clipboard!");
-        }
+        newBtn.addEventListener('click', () => {
+            urlInput.value = '';
+            aliasInput.value = '';
+            document.getElementById('expiryValue').value = '';
+            document.getElementById('maxClicks').value = '';
+            enableExpiry.checked = false;
+            expirySection.classList.remove('show');
+            formSection.style.display = 'block';
+            resultSection.classList.remove('show');
+            errorMsg.classList.remove('show');
+            expiryInfo.style.display = 'none';
+        });
+
+        urlInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                shortenBtn.click();
+            }
+        });
+
+        aliasInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                shortenBtn.click();
+            }
+        });
     </script>
 </body>
 </html>
