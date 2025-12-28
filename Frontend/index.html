@@ -23,7 +23,6 @@
             position: relative;
         }
 
-        /* Paper texture overlay */
         body::before {
             content: '';
             position: fixed;
@@ -43,7 +42,6 @@
             z-index: 1;
         }
 
-        /* Ink splatter decorations */
         .ink-splatter {
             position: fixed;
             width: 120px;
@@ -67,7 +65,6 @@
             height: 100px;
         }
 
-        /* Main Container */
         .container {
             background: #faf7f0;
             border: 3px solid #1a1a1a;
@@ -81,7 +78,6 @@
             z-index: 10;
         }
 
-        /* Decorative corner brackets */
         .container::before,
         .container::after {
             content: '';
@@ -105,7 +101,6 @@
             border-top: none;
         }
 
-        /* Header */
         .header {
             text-align: center;
             margin-bottom: 40px;
@@ -140,7 +135,6 @@
             letter-spacing: 0.5px;
         }
 
-        /* Toggle Buttons */
         .toggle-container {
             display: flex;
             gap: 15px;
@@ -177,7 +171,6 @@
             color: #faf7f0;
         }
 
-        /* Input Groups */
         .input-group {
             margin-bottom: 25px;
         }
@@ -246,7 +239,6 @@
             flex: 1;
         }
 
-        /* Checkbox */
         .checkbox-group {
             display: flex;
             align-items: center;
@@ -270,7 +262,6 @@
             font-family: 'Libre Franklin', sans-serif;
         }
 
-        /* Generate Button */
         .btn {
             width: 100%;
             padding: 18px;
@@ -298,7 +289,6 @@
             box-shadow: none;
         }
 
-        /* Result Section */
         .result {
             display: none;
             margin-top: 35px;
@@ -369,7 +359,6 @@
             font-style: italic;
         }
 
-        /* Buttons */
         .copy-btn, .new-btn {
             padding: 12px 24px;
             border: 2px solid #1a1a1a;
@@ -400,7 +389,6 @@
             margin-top: 15px;
         }
 
-        /* Error Message */
         .error {
             color: #faf7f0;
             background: #8b1426;
@@ -429,7 +417,6 @@
             75% { transform: translateX(6px); }
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
             .container {
                 padding: 35px 25px;
@@ -537,6 +524,9 @@
     </div>
 
     <script>
+        // Backend API URL - Updated for production
+        const API_URL = 'https://url-shortener-production-b5ef.up.railway.app';
+
         const simpleBtn = document.getElementById('simpleBtn');
         const customBtn = document.getElementById('customBtn');
         const customAliasSection = document.getElementById('customAliasSection');
@@ -659,7 +649,7 @@
             }
 
             try {
-                const response = await fetch('http://localhost:3000/shorten', {
+                const response = await fetch(`${API_URL}/shorten`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -670,7 +660,7 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    const shortLink = `http://localhost:3000/${data.shortCode}`;
+                    const shortLink = `${API_URL}/${data.shortCode}`;
                     shortUrl.href = shortLink;
                     shortUrl.textContent = shortLink;
                     formSection.style.display = 'none';
