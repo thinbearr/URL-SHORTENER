@@ -6,10 +6,16 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
+// Middleware - CORS Configuration (UPDATED)
 app.use(cors({
-    origin: process.env.FRONTEND_URL || '*',
-    credentials: true
+    origin: [
+        'http://localhost:5173',
+        'http://localhost:3000',
+        'https://url-shortener-xi-flax.vercel.app'  // Your Vercel frontend
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 
@@ -238,7 +244,7 @@ app.get('/:shortCode', async (req, res) => {
                     <div class="error-container">
                         <h1>404</h1>
                         <p>This short URL doesn't exist.</p>
-                        <a href="${process.env.FRONTEND_URL || '/'}">Go Back Home</a>
+                        <a href="${process.env.FRONTEND_URL || 'https://url-shortener-xi-flax.vercel.app'}">Go Back Home</a>
                     </div>
                 </body>
                 </html>
@@ -304,7 +310,7 @@ app.get('/:shortCode', async (req, res) => {
                                 ? `This link expired on ${new Date(urlData.expiresAt).toLocaleString()}`
                                 : `This link was set to expire after ${urlData.maxClicks} clicks`}
                         </div>
-                        <a href="${process.env.FRONTEND_URL || '/'}">Create a New Link</a>
+                        <a href="${process.env.FRONTEND_URL || 'https://url-shortener-xi-flax.vercel.app'}">Create a New Link</a>
                     </div>
                 </body>
                 </html>
