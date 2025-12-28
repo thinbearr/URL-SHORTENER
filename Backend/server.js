@@ -8,11 +8,7 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware - CORS Configuration (UPDATED)
 app.use(cors({
-    origin: [
-        'http://localhost:5173',
-        'http://localhost:3000',
-        'https://url-shortener-xi-flax.vercel.app'  // Your Vercel frontend
-    ],
+    origin: '*',  // Allow all origins temporarily for testing
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
