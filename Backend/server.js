@@ -25,10 +25,8 @@ app.use((req, res, next) => {
 // MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/urlshortener';
 
-mongoose.connect(MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-})
+// ✅ UPDATED: Removed deprecated options (useNewUrlParser, useUnifiedTopology)
+mongoose.connect(MONGODB_URI)
 .then(() => console.log('✅ MongoDB Connected'))
 .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
