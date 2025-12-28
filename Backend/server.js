@@ -28,7 +28,7 @@ mongoose.connect(MONGODB_URI)
     .then(() => console.log('MongoDB Connected'))
     .catch(err => console.error('MongoDB Connection Error:', err));
 
-// In-Memory Cache (Hashmap) for O(1) read performance
+// In-Memory Cache (Hashmap)
 const urlCache = new Map();
 
 // Database Schema
@@ -120,10 +120,14 @@ app.post('/shorten', async (req, res) => {
 
         const baseUrl = process.env.BACKEND_URL || `http://localhost:${PORT}`;
 
+        // ✅ FIXED: Added expiry details back to the response
         res.json({ 
             shortCode, 
             shortUrl: `${baseUrl}/${shortCode}`,
-            originalUrl: url
+            originalUrl: url,
+            expiryType: urlData.expiryType,
+            expiresAt: urlData.expiresAt,
+            maxClicks: urlData.maxClicks
         });
     } catch (error) {
         console.error('Create Error:', error);
@@ -135,13 +139,13 @@ app.get('/:shortCode', async (req, res) => {
     try {
         const { shortCode } = req.params;
 
-        // 1. Check Cache (Hashmap)
+        // 1. Check Cache
         if (urlCache.has(shortCode)) {
             console.log(`Cache Hit: ${shortCode}`);
             return res.redirect(urlCache.get(shortCode));
         }
 
-        // 2. Check Database
+        // 2. Check DB
         const urlData = await Url.findOne({ shortCode });
 
         if (!urlData) {
@@ -152,7 +156,7 @@ app.get('/:shortCode', async (req, res) => {
             return res.status(410).send(getErrorPage('410', 'Link Expired', 'This link is no longer active.'));
         }
 
-        // 3. Update Cache and Stats
+        // 3. Update Cache
         if (!urlData.expiryType) {
             urlCache.set(shortCode, urlData.url);
         }
@@ -167,7 +171,7 @@ app.get('/:shortCode', async (req, res) => {
     }
 });
 
-// Helper for consistency in error pages
+// Clean Dark Theme for Error Pages
 function getErrorPage(code, title, message) {
     return `
         <!DOCTYPE html>
@@ -176,8 +180,9 @@ function getErrorPage(code, title, message) {
             <title>${title}</title>
             <style>
                 body {
-                    font-family: 'Segoe UI', sans-serif;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                    background: #1a1a1a;
+                    color: #ffffff;
                     min-height: 100vh;
                     display: flex;
                     justify-content: center;
@@ -185,24 +190,27 @@ function getErrorPage(code, title, message) {
                     margin: 0;
                 }
                 .container {
-                    background: white;
-                    padding: 50px;
-                    border-radius: 20px;
+                    background: #2d2d2d;
+                    padding: 40px;
+                    border-radius: 12px;
                     text-align: center;
-                    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-                    max-width: 500px;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                    max-width: 450px;
+                    width: 90%;
                 }
-                h1 { color: #ff4757; font-size: 3em; margin: 0 0 20px 0; }
-                p { color: #666; font-size: 1.2em; margin-bottom: 30px; }
+                h1 { color: #ff5252; font-size: 3em; margin: 0 0 15px 0; }
+                p { color: #cccccc; font-size: 1.1em; margin-bottom: 25px; line-height: 1.5; }
                 a {
                     display: inline-block;
-                    padding: 15px 40px;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    color: white;
+                    padding: 12px 30px;
+                    background: #ffffff;
+                    color: #1a1a1a;
                     text-decoration: none;
-                    border-radius: 10px;
-                    font-weight: 600;
+                    border-radius: 6px;
+                    font-weight: bold;
+                    transition: transform 0.2s;
                 }
+                a:hover { transform: translateY(-2px); opacity: 0.9; }
             </style>
         </head>
         <body>
