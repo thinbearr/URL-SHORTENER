@@ -14,7 +14,7 @@ app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-    
+
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
     }
@@ -25,11 +25,13 @@ app.use((req, res, next) => {
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/urlshortener';
 
 mongoose.connect(MONGODB_URI)
-    .then(() => console.log('MongoDB Connected'))
-    .catch(err => console.error('MongoDB Connection Error:', err));
+    .then(() => console.log('✅ MongoDB Connected'))
+    .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
-// In-Memory Cache (Hashmap)
+// LRU Cache Configuration
+const MAX_CACHE_SIZE = 5; // Small size for easy demo
 const urlCache = new Map();
+const operationLog = []; // Store operations for visualization
 
 // Database Schema
 const urlSchema = new mongoose.Schema({
@@ -43,6 +45,68 @@ const urlSchema = new mongoose.Schema({
 });
 
 const Url = mongoose.model('Url', urlSchema);
+
+// LRU Cache Functions
+function addToCache(shortCode, url) {
+    const startTime = performance.now();
+    
+    // If already exists, remove it (will re-add at end - LRU behavior)
+    if (urlCache.has(shortCode)) {
+        urlCache.delete(shortCode);
+    }
+    
+    // If cache is full, remove least recently used (first entry)
+    if (urlCache.size >= MAX_CACHE_SIZE) {
+        const firstKey = urlCache.keys().next().value;
+        const evictTime = (performance.now() - startTime).toFixed(2);
+        
+        // Log eviction
+        logOperation('EVICT', firstKey, evictTime, 'O(1)');
+        urlCache.delete(firstKey);
+    }
+    
+    // Add to end (most recent)
+    urlCache.set(shortCode, url);
+    const setTime = (performance.now() - startTime).toFixed(2);
+    
+    // Log the SET operation
+    logOperation('SET', shortCode, setTime, 'O(1)');
+}
+
+function getFromCache(shortCode) {
+    const startTime = performance.now();
+    
+    if (!urlCache.has(shortCode)) {
+        return null;
+    }
+    
+    // Move to end (mark as recently used - LRU behavior)
+    const url = urlCache.get(shortCode);
+    urlCache.delete(shortCode);
+    urlCache.set(shortCode, url);
+    
+    const hitTime = (performance.now() - startTime).toFixed(2);
+    logOperation('HIT', shortCode, hitTime, 'O(1)');
+    
+    return url;
+}
+
+// Operation Logger
+function logOperation(type, key, timeMs, complexity) {
+    operationLog.push({
+        type,
+        key: key ? key.substring(0, 3) + '***' : null, // Privacy: show abc***
+        time: timeMs,
+        complexity,
+        timestamp: Date.now(),
+        cacheSize: urlCache.size
+    });
+    
+    // Keep only last 100 operations
+    if (operationLog.length > 100) {
+        operationLog.shift();
+    }
+}
 
 // Utilities
 function generateShortCode() {
@@ -73,10 +137,63 @@ function isExpired(urlData) {
 
 // Routes
 app.get('/', (req, res) => {
-    res.json({ 
+    res.json({
         status: 'active',
-        message: 'URL Shortener API',
-        cacheSize: urlCache.size
+        message: 'URL Shortener API with LRU Cache',
+        cacheSize: `${urlCache.size}/${MAX_CACHE_SIZE}`,
+        totalOperations: operationLog.length
+    });
+});
+
+// Live Operations Stream (Server-Sent Events)
+app.get('/live-operations', (req, res) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    
+    // Send initial data
+    res.write(`data: ${JSON.stringify(operationLog.slice(-20))}\n\n`);
+    
+    // Send updates every second
+    const interval = setInterval(() => {
+        if (operationLog.length > 0) {
+            const recentOps = operationLog.slice(-20);
+            res.write(`data: ${JSON.stringify(recentOps)}\n\n`);
+        }
+    }, 1000);
+    
+    // Cleanup on disconnect
+    req.on('close', () => {
+        clearInterval(interval);
+    });
+});
+
+// Get Cache Statistics
+app.get('/cache-stats', (req, res) => {
+    const hits = operationLog.filter(op => op.type === 'HIT').length;
+    const misses = operationLog.filter(op => op.type === 'MISS').length;
+    const total = hits + misses;
+    const hitRate = total > 0 ? ((hits / total) * 100).toFixed(1) : 0;
+    
+    const avgHitTime = hits > 0 
+        ? (operationLog.filter(op => op.type === 'HIT').reduce((sum, op) => sum + parseFloat(op.time), 0) / hits).toFixed(3)
+        : 0;
+    
+    const avgMissTime = misses > 0
+        ? (operationLog.filter(op => op.type === 'MISS').reduce((sum, op) => sum + parseFloat(op.time), 0) / misses).toFixed(3)
+        : 0;
+    
+    res.json({
+        cacheSize: urlCache.size,
+        maxCacheSize: MAX_CACHE_SIZE,
+        totalOperations: operationLog.length,
+        hits,
+        misses,
+        hitRate: parseFloat(hitRate),
+        avgHitTime: parseFloat(avgHitTime),
+        avgMissTime: parseFloat(avgMissTime),
+        cacheContents: Array.from(urlCache.keys()).map(k => k.substring(0, 3) + '***')
     });
 });
 
@@ -118,11 +235,17 @@ app.post('/shorten', async (req, res) => {
         const newUrl = new Url(urlData);
         await newUrl.save();
 
+        // Add to cache (only non-expiring URLs for simplicity)
+        if (!urlData.expiryType) {
+            addToCache(shortCode, url);
+        }
+
         const baseUrl = process.env.BACKEND_URL || `http://localhost:${PORT}`;
 
-        // ✅ FIXED: Added expiry details back to the response
-        res.json({ 
-            shortCode, 
+        console.log(`Created: ${shortCode} → ${url}`);
+
+        res.json({
+            shortCode,
             shortUrl: `${baseUrl}/${shortCode}`,
             originalUrl: url,
             expiryType: urlData.expiryType,
@@ -138,15 +261,26 @@ app.post('/shorten', async (req, res) => {
 app.get('/:shortCode', async (req, res) => {
     try {
         const { shortCode } = req.params;
+        const overallStart = performance.now();
 
-        // 1. Check Cache
-        if (urlCache.has(shortCode)) {
-            console.log(`Cache Hit: ${shortCode}`);
-            return res.redirect(urlCache.get(shortCode));
+        // 1. Check Cache (O(1))
+        const cachedUrl = getFromCache(shortCode);
+        
+        if (cachedUrl) {
+            console.log(`✅ Cache HIT: ${shortCode}`);
+            
+            // Still need to update click count in DB
+            await Url.findOneAndUpdate({ shortCode }, { $inc: { clicks: 1 } });
+            
+            return res.redirect(cachedUrl);
         }
 
-        // 2. Check DB
+        // 2. Cache Miss - Query Database (O(log n))
+        const dbStart = performance.now();
         const urlData = await Url.findOne({ shortCode });
+        const dbTime = (performance.now() - dbStart).toFixed(2);
+        
+        logOperation('MISS', shortCode, dbTime, 'O(log n)');
 
         if (!urlData) {
             return res.status(404).send(getErrorPage('404', 'URL Not Found', 'This link does not exist.'));
@@ -156,13 +290,16 @@ app.get('/:shortCode', async (req, res) => {
             return res.status(410).send(getErrorPage('410', 'Link Expired', 'This link is no longer active.'));
         }
 
-        // 3. Update Cache
+        // 3. Add to cache for future requests (only non-expiring)
         if (!urlData.expiryType) {
-            urlCache.set(shortCode, urlData.url);
+            addToCache(shortCode, urlData.url);
         }
 
+        // 4. Update clicks
         urlData.clicks++;
         await urlData.save();
+
+        console.log(`🔗 Redirect: ${shortCode} → ${urlData.url} (Click #${urlData.clicks})`);
 
         res.redirect(urlData.url);
     } catch (error) {
@@ -171,7 +308,7 @@ app.get('/:shortCode', async (req, res) => {
     }
 });
 
-// Clean Dark Theme for Error Pages
+// Error Pages
 function getErrorPage(code, title, message) {
     return `
         <!DOCTYPE html>
@@ -217,7 +354,7 @@ function getErrorPage(code, title, message) {
             <div class="container">
                 <h1>${code}</h1>
                 <p>${message}</p>
-                <a href="${process.env.FRONTEND_URL || '#'}">Go Home</a>
+                <a href="${process.env.FRONTEND_URL || 'https://urlnanoed.vercel.app'}">Go Home</a>
             </div>
         </body>
         </html>
@@ -225,5 +362,8 @@ function getErrorPage(code, title, message) {
 }
 
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`URL Shortener API running on port ${PORT}`);
+    console.log(`LRU Cache Size: ${MAX_CACHE_SIZE}`);
+    console.log(`Database: MongoDB`);
+    console.log(`Live Operations: /live-operations`);
 });
