@@ -608,27 +608,23 @@ function getErrorPage(code, title, message) {
     `;
 }
 
-// Fallback/Health Check Route (Must be after static files)
+// Fallback/Health Check Route
 app.get('/', (req, res) => {
-    res.send('Backend is running. Access endpoints at /api/status');
+    const dbState = mongoose.connection.readyState;
+    const status = dbState === 1 ? 'Connected' : dbState === 2 ? 'Connecting' : 'Disconnected';
+    res.send(`Backend is running! DB Status: ${status}`);
 });
 
-const startServer = async () => {
-    try {
-        console.log('Attempting to connect to MongoDB...');
-        await mongoose.connect(MONGODB_URI);
-        console.log('✅ MongoDB Connected Successfully');
+// START SERVER IMMEDIATELY (Fixes Railway 502 Timeout)
+const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Server started on port ${PORT}`);
+    console.log(`Waiting for MongoDB...`);
+});
 
-        app.listen(PORT, () => {
-            console.log(`URL Shortener API running on port ${PORT}`);
-            console.log(`LRU Cache Size: ${MAX_CACHE_SIZE}`);
-            console.log(`Database: MongoDB`);
-            console.log(`Live Operations: /live-operations`);
-        });
-    } catch (err) {
-        console.error('❌ CRITICAL STARTUP ERROR:', err);
-        process.exit(1); // Exit with failure so Railway knows it crashed
-    }
-};
-
-startServer();
+// Connect to MongoDB asynchronously
+mongoose.connect(MONGODB_URI)
+    .then(() => console.log('✅ MongoDB Connected Successfully'))
+    .catch(err => {
+        console.error('❌ MongoDB Connection Error:', err);
+        // Don't exit process, just log error so server stays up for logs
+    });
