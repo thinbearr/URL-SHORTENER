@@ -1456,7 +1456,8 @@
 
                     // Show Result
                     shortUrl.href = data.shortUrl;
-                    shortUrl.textContent = data.shortUrl;
+                    // Display cleaner URL without protocol (e.g. minurl.up.railway.app/xyz)
+                    shortUrl.textContent = data.shortUrl.replace(/^https?:\/\//, '');
                     resultSection.classList.add('show');
                     formSection.style.display = 'none';
 
