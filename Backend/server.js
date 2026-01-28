@@ -613,10 +613,22 @@ app.get('/', (req, res) => {
     res.send('Backend is running. Access endpoints at /api/status');
 });
 
-// Remove explicit IP binding to allow default (IPv4/IPv6)
-app.listen(PORT, () => {
-    console.log(`URL Shortener API running on port ${PORT}`);
-    console.log(`LRU Cache Size: ${MAX_CACHE_SIZE}`);
-    console.log(`Database: MongoDB`);
-    console.log(`Live Operations: /live-operations`);
-});
+const startServer = async () => {
+    try {
+        console.log('Attempting to connect to MongoDB...');
+        await mongoose.connect(MONGODB_URI);
+        console.log('✅ MongoDB Connected Successfully');
+
+        app.listen(PORT, () => {
+            console.log(`URL Shortener API running on port ${PORT}`);
+            console.log(`LRU Cache Size: ${MAX_CACHE_SIZE}`);
+            console.log(`Database: MongoDB`);
+            console.log(`Live Operations: /live-operations`);
+        });
+    } catch (err) {
+        console.error('❌ CRITICAL STARTUP ERROR:', err);
+        process.exit(1); // Exit with failure so Railway knows it crashed
+    }
+};
+
+startServer();
