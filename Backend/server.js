@@ -608,7 +608,13 @@ function getErrorPage(code, title, message) {
     `;
 }
 
-app.listen(PORT, '0.0.0.0', () => {
+// Fallback/Health Check Route (Must be after static files)
+app.get('/', (req, res) => {
+    res.send('Backend is running. Access endpoints at /api/status');
+});
+
+// Remove explicit IP binding to allow default (IPv4/IPv6)
+app.listen(PORT, () => {
     console.log(`URL Shortener API running on port ${PORT}`);
     console.log(`LRU Cache Size: ${MAX_CACHE_SIZE}`);
     console.log(`Database: MongoDB`);
