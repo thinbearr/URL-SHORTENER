@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 
 const app = express();
+app.enable('trust proxy');
 const PORT = process.env.PORT || 3000;
 
 // Middleware
@@ -383,7 +384,7 @@ app.post('/shorten', async (req, res) => {
 
         if (existingUrl && !forceNew && !alias) {
             // URL already exists - offer to reuse
-            const baseUrl = process.env.BACKEND_URL || `http://localhost:${PORT}`;
+            const baseUrl = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
 
             // Log the dedup operation
             logOperation('DEDUP', existingUrl.shortCode, '0.00', 'O(1)', 'Reverse lookup found existing entry');
@@ -442,7 +443,7 @@ app.post('/shorten', async (req, res) => {
             ttlHeap.insert(shortCode, urlData.expiresAt);
         }
 
-        const baseUrl = process.env.BACKEND_URL || `http://localhost:${PORT}`;
+        const baseUrl = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
 
         console.log(`Created: ${shortCode} → ${url}`);
 
