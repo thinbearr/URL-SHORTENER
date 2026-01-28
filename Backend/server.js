@@ -28,11 +28,6 @@ mongoose.connect(MONGODB_URI)
     .then(() => console.log('✅ MongoDB Connected'))
     .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
-// LRU Cache Configuration
-const MAX_CACHE_SIZE = 5; // Small size for easy demo
-const urlCache = new Map();
-const operationLog = []; // Store operations for visualization
-
 // Database Schema
 const urlSchema = new mongoose.Schema({
     shortCode: { type: String, required: true, unique: true, index: true },
@@ -46,62 +41,223 @@ const urlSchema = new mongoose.Schema({
 
 const Url = mongoose.model('Url', urlSchema);
 
+// ==========================================
+// PRIORITY QUEUE (MIN HEAP) - For TTL Management
+// ==========================================
+class MinHeap {
+    constructor() {
+        this.heap = []; // Each element: { shortCode, expiresAt }
+    }
+
+    // Helper methods
+    getParentIndex(i) { return Math.floor((i - 1) / 2); }
+    getLeftChildIndex(i) { return 2 * i + 1; }
+    getRightChildIndex(i) { return 2 * i + 2; }
+    hasParent(i) { return this.getParentIndex(i) >= 0; }
+    hasLeftChild(i) { return this.getLeftChildIndex(i) < this.heap.length; }
+    hasRightChild(i) { return this.getRightChildIndex(i) < this.heap.length; }
+    parent(i) { return this.heap[this.getParentIndex(i)]; }
+    leftChild(i) { return this.heap[this.getLeftChildIndex(i)]; }
+    rightChild(i) { return this.heap[this.getRightChildIndex(i)]; }
+
+    swap(i, j) {
+        [this.heap[i], this.heap[j]] = [this.heap[j], this.heap[i]];
+    }
+
+    // O(1) - Check minimum without removing
+    peek() {
+        return this.heap.length > 0 ? this.heap[0] : null;
+    }
+
+    size() {
+        return this.heap.length;
+    }
+
+    // O(log n) - Insert new element
+    insert(shortCode, expiresAt) {
+        const startTime = performance.now();
+        this.heap.push({ shortCode, expiresAt: new Date(expiresAt) });
+        this.heapifyUp();
+        const insertTime = (performance.now() - startTime).toFixed(2);
+        logHeapOperation('HEAP_INSERT', shortCode, insertTime, 'O(log n)', `Expires: ${new Date(expiresAt).toLocaleTimeString()}`);
+    }
+
+    // O(log n) - Remove and return minimum
+    extractMin() {
+        if (this.heap.length === 0) return null;
+        const startTime = performance.now();
+        const min = this.heap[0];
+        const last = this.heap.pop();
+        if (this.heap.length > 0) {
+            this.heap[0] = last;
+            this.heapifyDown();
+        }
+        const extractTime = (performance.now() - startTime).toFixed(2);
+        logHeapOperation('HEAP_EXTRACT', min.shortCode, extractTime, 'O(log n)', 'Time Limit Reached - Removed from queue');
+        return min;
+    }
+
+    // Bubble up to maintain heap property
+    heapifyUp() {
+        let index = this.heap.length - 1;
+        while (this.hasParent(index) && this.parent(index).expiresAt > this.heap[index].expiresAt) {
+            this.swap(this.getParentIndex(index), index);
+            index = this.getParentIndex(index);
+        }
+    }
+
+    // Bubble down to maintain heap property
+    heapifyDown() {
+        let index = 0;
+        while (this.hasLeftChild(index)) {
+            let smallerChildIndex = this.getLeftChildIndex(index);
+            if (this.hasRightChild(index) && this.rightChild(index).expiresAt < this.leftChild(index).expiresAt) {
+                smallerChildIndex = this.getRightChildIndex(index);
+            }
+            if (this.heap[index].expiresAt <= this.heap[smallerChildIndex].expiresAt) {
+                break;
+            }
+            this.swap(index, smallerChildIndex);
+            index = smallerChildIndex;
+        }
+    }
+
+    // Get all items for visualization (sorted by expiry)
+    getAll() {
+        return [...this.heap].sort((a, b) => new Date(a.expiresAt) - new Date(b.expiresAt));
+    }
+
+    // Remove a specific item by shortCode (for when link is deleted manually)
+    remove(shortCode) {
+        const index = this.heap.findIndex(item => item.shortCode === shortCode);
+        if (index === -1) return false;
+
+        // Replace with last element and re-heapify
+        const last = this.heap.pop();
+        if (index < this.heap.length) {
+            this.heap[index] = last;
+            this.heapifyDown();
+            this.heapifyUp();
+        }
+        return true;
+    }
+}
+
+// Initialize the TTL Priority Queue
+const ttlHeap = new MinHeap();
+const heapOperationLog = []; // Separate log for heap operations
+
+// Heap Operation Logger
+function logHeapOperation(type, key, timeMs, complexity, details = null) {
+    heapOperationLog.push({
+        type,
+        key: key ? key : null,
+        time: timeMs,
+        complexity,
+        details,
+        timestamp: Date.now(),
+        heapSize: ttlHeap.size()
+    });
+
+    // Keep only last 50 operations
+    if (heapOperationLog.length > 50) {
+        heapOperationLog.shift();
+    }
+}
+
+// Background job to check and cleanup expired links from heap
+setInterval(async () => {
+    while (ttlHeap.size() > 0) {
+        const top = ttlHeap.peek();
+        if (!top) break;
+
+        const now = new Date();
+        if (new Date(top.expiresAt) <= now) {
+            // This link has expired - extract and delete
+            const expired = ttlHeap.extractMin();
+
+            // Delete from database
+            await Url.deleteOne({ shortCode: expired.shortCode });
+
+            // Remove from cache if present
+            if (urlCache.has(expired.shortCode)) {
+                urlCache.delete(expired.shortCode);
+            }
+
+            console.log(`❌ Link Expired (Heap): ${expired.shortCode}`);
+            logOperation('EXPIRED', expired.shortCode, '0.00', 'Heap Extract', 'Time Limit Reached (Priority Queue Cleaned)');
+            logHeapOperation('TTL_EXPIRED', expired.shortCode, '0.00', 'Heap Extract', 'Time Limit Reached');
+        } else {
+            // Top of heap hasn't expired yet, no need to check others
+            break;
+        }
+    }
+}, 5000); // Check every 5 seconds
+
+// ==========================================
+// LRU CACHE (HASHMAP) - For Fast Lookups
+// ==========================================
+const MAX_CACHE_SIZE = 5; // Small size for easy demo
+const urlCache = new Map();
+const operationLog = []; // Store operations for visualization
+
 // LRU Cache Functions
 function addToCache(shortCode, url) {
     const startTime = performance.now();
-    
+
     // If already exists, remove it (will re-add at end - LRU behavior)
     if (urlCache.has(shortCode)) {
         urlCache.delete(shortCode);
     }
-    
+
     // If cache is full, remove least recently used (first entry)
     if (urlCache.size >= MAX_CACHE_SIZE) {
         const firstKey = urlCache.keys().next().value;
         const evictTime = (performance.now() - startTime).toFixed(2);
-        
+
         // Log eviction
         logOperation('EVICT', firstKey, evictTime, 'O(1)');
         urlCache.delete(firstKey);
     }
-    
+
     // Add to end (most recent)
     urlCache.set(shortCode, url);
     const setTime = (performance.now() - startTime).toFixed(2);
-    
+
     // Log the SET operation
     logOperation('SET', shortCode, setTime, 'O(1)');
 }
 
 function getFromCache(shortCode) {
     const startTime = performance.now();
-    
+
     if (!urlCache.has(shortCode)) {
         return null;
     }
-    
+
     // Move to end (mark as recently used - LRU behavior)
     const url = urlCache.get(shortCode);
     urlCache.delete(shortCode);
     urlCache.set(shortCode, url);
-    
+
     const hitTime = (performance.now() - startTime).toFixed(2);
     logOperation('HIT', shortCode, hitTime, 'O(1)');
-    
+
     return url;
 }
 
 // Operation Logger
-function logOperation(type, key, timeMs, complexity) {
+function logOperation(type, key, timeMs, complexity, details = null) {
     operationLog.push({
         type,
-        key: key ? key.substring(0, 3) + '***' : null, // Privacy: show abc***
+        key: key ? key : null, // Privacy: show exact key for demo clarity now
         time: timeMs,
         complexity,
+        details,
         timestamp: Date.now(),
         cacheSize: urlCache.size
     });
-    
+
     // Keep only last 100 operations
     if (operationLog.length > 100) {
         operationLog.shift();
@@ -151,18 +307,34 @@ app.get('/live-operations', (req, res) => {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.setHeader('Access-Control-Allow-Origin', '*');
-    
+
+    const sendUpdate = () => {
+        const data = {
+            // HashMap (LRU Cache) data
+            logs: operationLog.slice(-20),
+            cacheKeys: Array.from(urlCache.keys()),
+            cacheSize: urlCache.size,
+            maxSize: MAX_CACHE_SIZE,
+            // Priority Queue (Heap) data
+            heapLogs: heapOperationLog.slice(-20),
+            heapItems: ttlHeap.getAll().map(item => ({
+                shortCode: item.shortCode,
+                expiresAt: item.expiresAt,
+                timeLeft: Math.max(0, Math.floor((new Date(item.expiresAt) - new Date()) / 1000))
+            })),
+            heapSize: ttlHeap.size()
+        };
+        res.write(`data: ${JSON.stringify(data)}\n\n`);
+    };
+
     // Send initial data
-    res.write(`data: ${JSON.stringify(operationLog.slice(-20))}\n\n`);
-    
-    // Send updates every second
+    sendUpdate();
+
+    // Send updates every second or when needed
     const interval = setInterval(() => {
-        if (operationLog.length > 0) {
-            const recentOps = operationLog.slice(-20);
-            res.write(`data: ${JSON.stringify(recentOps)}\n\n`);
-        }
+        sendUpdate(); // Always send state so blocks stay synced
     }, 1000);
-    
+
     // Cleanup on disconnect
     req.on('close', () => {
         clearInterval(interval);
@@ -175,15 +347,15 @@ app.get('/cache-stats', (req, res) => {
     const misses = operationLog.filter(op => op.type === 'MISS').length;
     const total = hits + misses;
     const hitRate = total > 0 ? ((hits / total) * 100).toFixed(1) : 0;
-    
-    const avgHitTime = hits > 0 
+
+    const avgHitTime = hits > 0
         ? (operationLog.filter(op => op.type === 'HIT').reduce((sum, op) => sum + parseFloat(op.time), 0) / hits).toFixed(3)
         : 0;
-    
+
     const avgMissTime = misses > 0
         ? (operationLog.filter(op => op.type === 'MISS').reduce((sum, op) => sum + parseFloat(op.time), 0) / misses).toFixed(3)
         : 0;
-    
+
     res.json({
         cacheSize: urlCache.size,
         maxCacheSize: MAX_CACHE_SIZE,
@@ -199,11 +371,36 @@ app.get('/cache-stats', (req, res) => {
 
 app.post('/shorten', async (req, res) => {
     try {
-        const { url, alias, expiryType, expiryValue, expiryUnit, maxClicks } = req.body;
+        const { url, alias, expiryType, expiryValue, expiryUnit, maxClicks, forceNew } = req.body;
 
         if (!url) return res.status(400).json({ error: 'URL is required' });
         if (!isValidUrl(url)) return res.status(400).json({ error: 'Invalid URL format' });
 
+        // DEDUPLICATION: Check if this exact URL already exists (Reverse Lookup)
+        const existingUrl = await Url.findOne({ url: url });
+
+        if (existingUrl && !forceNew && !alias) {
+            // URL already exists - offer to reuse
+            const baseUrl = process.env.BACKEND_URL || `http://localhost:${PORT}`;
+
+            // Log the dedup operation
+            logOperation('DEDUP', existingUrl.shortCode, '0.00', 'O(1)', 'Reverse lookup found existing entry');
+
+            console.log(`🔄 DEDUP: Reusing ${existingUrl.shortCode} for ${url}`);
+
+            return res.json({
+                shortCode: existingUrl.shortCode,
+                shortUrl: `${baseUrl}/${existingUrl.shortCode}`,
+                originalUrl: url,
+                expiryType: existingUrl.expiryType,
+                expiresAt: existingUrl.expiresAt,
+                maxClicks: existingUrl.maxClicks,
+                deduplicated: true,  // Flag to indicate this was a reuse
+                message: 'This URL already has a short link!'
+            });
+        }
+
+        // If existingUrl found but user wants forceNew, or using custom alias, create new entry
         let shortCode;
 
         if (alias) {
@@ -235,9 +432,12 @@ app.post('/shorten', async (req, res) => {
         const newUrl = new Url(urlData);
         await newUrl.save();
 
-        // Add to cache (only non-expiring URLs for simplicity)
-        if (!urlData.expiryType) {
-            addToCache(shortCode, url);
+        // Add to cache
+        addToCache(shortCode, url);
+
+        // If time-based expiry, add to Priority Queue (Min Heap) for proactive TTL management
+        if (urlData.expiryType === 'time' && urlData.expiresAt) {
+            ttlHeap.insert(shortCode, urlData.expiresAt);
         }
 
         const baseUrl = process.env.BACKEND_URL || `http://localhost:${PORT}`;
@@ -250,7 +450,8 @@ app.post('/shorten', async (req, res) => {
             originalUrl: url,
             expiryType: urlData.expiryType,
             expiresAt: urlData.expiresAt,
-            maxClicks: urlData.maxClicks
+            maxClicks: urlData.maxClicks,
+            deduplicated: false
         });
     } catch (error) {
         console.error('Create Error:', error);
@@ -261,17 +462,44 @@ app.post('/shorten', async (req, res) => {
 app.get('/:shortCode', async (req, res) => {
     try {
         const { shortCode } = req.params;
+
+        // Ignore internal/browser requests
+        if (shortCode === 'heap-state' || shortCode === 'favicon.ico') {
+            return res.status(404).end();
+        }
+
         const overallStart = performance.now();
 
         // 1. Check Cache (O(1))
         const cachedUrl = getFromCache(shortCode);
-        
+
         if (cachedUrl) {
             console.log(`✅ Cache HIT: ${shortCode}`);
-            
-            // Still need to update click count in DB
-            await Url.findOneAndUpdate({ shortCode }, { $inc: { clicks: 1 } });
-            
+
+            // First, fetch current state to check expiry BEFORE incrementing
+            const urlData = await Url.findOne({ shortCode });
+
+            // Check if link has expired (check BEFORE incrementing)
+            if (urlData && isExpired(urlData)) {
+                const reason = urlData.expiryType === 'time' ? 'Time Limit Reached' : 'Max Clicks Reached';
+
+                // Remove from cache
+                urlCache.delete(shortCode);
+
+                // Delete from DB
+                await Url.deleteOne({ shortCode });
+
+                console.log(`❌ Cached Link Expired & Deleted (${reason}): ${shortCode}`);
+                logOperation('EXPIRED', shortCode, '0.00', 'Deletion', reason);
+
+                return res.status(410).send(getErrorPage('410', 'Link Expired', `This link has expired due to: ${reason}`));
+            }
+
+            // Not expired - now increment the click count
+            if (urlData) {
+                await Url.updateOne({ shortCode }, { $inc: { clicks: 1 } });
+            }
+
             return res.redirect(cachedUrl);
         }
 
@@ -279,21 +507,37 @@ app.get('/:shortCode', async (req, res) => {
         const dbStart = performance.now();
         const urlData = await Url.findOne({ shortCode });
         const dbTime = (performance.now() - dbStart).toFixed(2);
-        
-        logOperation('MISS', shortCode, dbTime, 'O(log n)');
+
+        // Debugging: Log what caused the miss
+        console.log(`Debug - Cache Miss for: "${shortCode}"`);
+
+        logOperation('MISS', shortCode, dbTime, 'DB Search');
 
         if (!urlData) {
             return res.status(404).send(getErrorPage('404', 'URL Not Found', 'This link does not exist.'));
         }
 
         if (isExpired(urlData)) {
-            return res.status(410).send(getErrorPage('410', 'Link Expired', 'This link is no longer active.'));
+            const reason = urlData.expiryType === 'time' ? 'Time Limit Reached' : 'Max Clicks Reached';
+
+            // 1. Remove from cache if present (Visual: Block disappears)
+            if (urlCache.has(shortCode)) {
+                urlCache.delete(shortCode);
+                console.log(`🗑️ Removed from cache: ${shortCode}`);
+            }
+
+            // 2. Permanent Deletion from MongoDB
+            await Url.deleteOne({ shortCode });
+            console.log(`❌ Link Expired & Deleted (${reason}): ${shortCode}`);
+
+            // 3. Log Operation for Visual Feed (shows purple EXPIRED in logs)
+            logOperation('EXPIRED', shortCode, '0.00', 'Deletion', reason);
+
+            return res.status(410).send(getErrorPage('410', 'Link Expired', `This link has expired due to: ${reason}`));
         }
 
-        // 3. Add to cache for future requests (only non-expiring)
-        if (!urlData.expiryType) {
-            addToCache(shortCode, urlData.url);
-        }
+        // 3. Add to cache for future requests (ALL links, including expiring ones)
+        addToCache(shortCode, urlData.url);
 
         // 4. Update clicks
         urlData.clicks++;

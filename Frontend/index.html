@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>URL Shortener - Link Simplifier</title>
-    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700;900&family=Libre+Franklin:wght@400;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700;900&family=Libre+Franklin:wght@400;600;700&display=swap"
+        rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -15,9 +18,6 @@
         body {
             font-family: 'Libre Franklin', sans-serif;
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             background: #f5e6d3;
             color: #1a1a1a;
             padding: 20px;
@@ -36,13 +36,33 @@
         }
 
         .main-container {
-            width: 100%;
-            max-width: 1400px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
+            width: 95%;
+            max-width: 1700px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
             position: relative;
             z-index: 10;
+        }
+
+        .form-section-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .visualizations-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            align-items: start;
+        }
+
+        @media (max-width: 1100px) {
+            .visualizations-row {
+                grid-template-columns: 1fr;
+            }
         }
 
         .container {
@@ -154,7 +174,8 @@
             font-family: 'Merriweather', serif;
         }
 
-        input, select {
+        input,
+        select {
             width: 100%;
             padding: 12px 14px;
             border: 2px solid #1a1a1a;
@@ -171,23 +192,33 @@
             font-style: italic;
         }
 
-        input:focus, select:focus {
+        input:focus,
+        select:focus {
             border-color: #c41e3a;
             box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.1);
         }
 
-        .custom-alias, .expiry-section {
+        .custom-alias,
+        .expiry-section {
             display: none;
         }
 
-        .custom-alias.show, .expiry-section.show {
+        .custom-alias.show,
+        .expiry-section.show {
             display: block;
             animation: slideDown 0.3s ease;
         }
 
         @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .expiry-option {
@@ -266,8 +297,15 @@
         }
 
         @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .result-label {
@@ -315,7 +353,8 @@
             font-style: italic;
         }
 
-        .copy-btn, .new-btn {
+        .copy-btn,
+        .new-btn {
             padding: 10px 20px;
             border: 2px solid #1a1a1a;
             font-size: 0.85em;
@@ -329,7 +368,8 @@
             letter-spacing: 1px;
         }
 
-        .copy-btn:hover, .new-btn:hover {
+        .copy-btn:hover,
+        .new-btn:hover {
             background: #1a1a1a;
             color: #faf7f0;
         }
@@ -368,12 +408,22 @@
         }
 
         @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-6px); }
-            75% { transform: translateX(6px); }
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-6px);
+            }
+
+            75% {
+                transform: translateX(6px);
+            }
         }
 
-        /* Visualization Styles */
+        /* Updated Visualization Styles */
         .viz-header {
             display: flex;
             justify-content: space-between;
@@ -410,568 +460,1044 @@
             animation: pulse 2s infinite;
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
-        .cache-status {
+        /* CACHE BLOCKS UI */
+        .cache-container {
+            margin-bottom: 25px;
             background: #ffffff;
-            border: 2px solid #1a1a1a;
-            padding: 15px;
-            margin-bottom: 20px;
+            border: 3px solid #1a1a1a;
+            padding: 20px;
+            position: relative;
         }
 
-        .cache-info {
+        .cache-label-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
+            font-family: 'Merriweather', serif;
+            font-weight: 700;
             font-size: 0.9em;
+            text-transform: uppercase;
         }
 
-        .cache-bar {
-            width: 100%;
-            height: 20px;
-            background: #e9ecef;
+        .cache-blocks {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            height: 60px;
+        }
+
+        .cache-block {
             border: 2px solid #1a1a1a;
+            background: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 700;
+            font-family: 'Libre Franklin', sans-serif;
+            font-size: 0.8em;
+            color: #aaa;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
             overflow: hidden;
         }
 
-        .cache-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #c41e3a 0%, #8b1426 100%);
-            transition: width 0.5s ease;
+        .cache-block.filled {
+            background: #1a1a1a;
+            color: #fff;
+            border-color: #1a1a1a;
+            box-shadow: 3px 3px 0 rgba(196, 30, 58, 0.2);
         }
 
+        .cache-block.filled::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: #c41e3a;
+        }
+
+        .cache-block.empty {
+            background-image: repeating-linear-gradient(45deg, #f0f0f0, #f0f0f0 10px, #e6e6e6 10px, #e6e6e6 20px);
+        }
+
+        /* STATS GRID */
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 15px;
+            margin-bottom: 25px;
         }
 
         .stat-card {
             background: #ffffff;
             border: 2px solid #1a1a1a;
-            padding: 12px;
+            padding: 15px;
             text-align: center;
+            box-shadow: 2px 2px 0 #1a1a1a;
         }
 
         .stat-label {
-            font-size: 0.75em;
+            font-size: 0.7em;
             text-transform: uppercase;
             letter-spacing: 1px;
             color: #666;
             margin-bottom: 5px;
             font-weight: 700;
-        }
-
-        .stat-value {
-            font-size: 1.5em;
-            font-weight: 900;
             font-family: 'Merriweather', serif;
         }
 
+        .stat-value {
+            font-size: 1.4em;
+            font-weight: 900;
+            font-family: 'Libre Franklin', sans-serif;
+            color: #1a1a1a;
+        }
+
+        /* Updated Operation Styles for Box Look */
         .operations-feed {
-            background: #ffffff;
-            border: 2px solid #1a1a1a;
-            padding: 15px;
-            max-height: 400px;
+            background: #faf7f0;
+            border: 3px solid #1a1a1a;
+            padding: 12px;
+            height: 300px;
             overflow-y: auto;
+            position: relative;
         }
 
         .operation {
-            padding: 12px;
-            margin-bottom: 8px;
-            border-left: 4px solid #ddd;
-            background: #f8f9fa;
-            font-size: 0.85em;
-            animation: slideIn 0.3s ease;
+            padding: 14px 14px 14px 18px;
+            border: 2px solid #1a1a1a;
+            background: #fff;
+            margin-bottom: 12px;
+            box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.15);
+            transition: all 0.2s ease;
+            position: relative;
+            border-left: 6px solid #1a1a1a;
         }
 
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
+        .operation:last-child {
+            margin-bottom: 0;
         }
 
-        .operation.hit {
+        .operation:hover {
+            transform: translateX(3px);
+            box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.15);
+        }
+
+        /* Operation Type Colors via Left Border */
+        .operation.op-hit {
             border-left-color: #28a745;
+            background: linear-gradient(90deg, rgba(40, 167, 69, 0.08) 0%, #fff 15%);
         }
 
-        .operation.miss {
+        .operation.op-miss {
             border-left-color: #dc3545;
+            background: linear-gradient(90deg, rgba(220, 53, 69, 0.08) 0%, #fff 15%);
         }
 
-        .operation.set {
+        .operation.op-set {
             border-left-color: #007bff;
+            background: linear-gradient(90deg, rgba(0, 123, 255, 0.08) 0%, #fff 15%);
         }
 
-        .operation.evict {
+        .operation.op-evict {
             border-left-color: #ffc107;
+            background: linear-gradient(90deg, rgba(255, 193, 7, 0.1) 0%, #fff 15%);
         }
 
-        .op-type {
+        .operation.op-expired {
+            border-left-color: #6610f2;
+            background: linear-gradient(90deg, rgba(102, 16, 242, 0.08) 0%, #fff 15%);
+        }
+
+        .op-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .op-title {
+            font-family: 'Merriweather', serif;
+            font-weight: 900;
+            font-size: 0.95em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #1a1a1a;
+        }
+
+        .op-hit .op-title {
+            color: #28a745;
+        }
+
+        .op-miss .op-title {
+            color: #dc3545;
+        }
+
+        .op-set .op-title {
+            color: #007bff;
+        }
+
+        .op-evict .op-title {
+            color: #b8860b;
+        }
+
+        .op-expired .op-title {
+            color: #6610f2;
+        }
+
+        .op-dedup .op-title {
+            color: #17a2b8;
+        }
+
+        .operation.op-dedup {
+            border-left-color: #17a2b8;
+            background: linear-gradient(90deg, rgba(23, 162, 184, 0.1) 0%, #fff 15%);
+        }
+
+        .complexity-tag {
+            background: #1a1a1a;
+            color: #fff;
+            padding: 3px 8px;
+            font-size: 0.7em;
+            font-weight: 700;
+            font-family: 'Libre Franklin', sans-serif;
+            letter-spacing: 0.5px;
+        }
+
+        .op-desc {
+            font-family: 'Libre Franklin', sans-serif;
+            font-size: 0.85em;
+            color: #555;
+            font-style: italic;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .op-meta {
+            display: flex;
+            gap: 8px;
+            font-size: 0.75em;
+            color: #888;
+            font-weight: 600;
+            font-family: 'Libre Franklin', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .op-meta span {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border: 1px solid #ddd;
+        }
+
+        /* NEW ABOUT PROJECT SECTION STYLES */
+        .about-project {
+            margin-top: 30px;
+            border-top: 2px solid #1a1a1a;
+            /* Separator */
+            padding-top: 20px;
+        }
+
+        .about-title {
+            font-family: 'Merriweather', serif;
+            font-size: 1.1em;
+            font-weight: 900;
+            text-transform: uppercase;
+            color: #1a1a1a;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+        }
+
+        .about-subtitle {
+            font-family: 'Merriweather', serif;
+            font-weight: 900;
+            color: #c41e3a;
+            /* Red highlight */
+            font-size: 0.9em;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .about-text {
+            font-family: 'Libre Franklin', sans-serif;
+            font-size: 0.85em;
+            color: #333;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        .about-list {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 15px;
+        }
+
+        .about-list li {
+            margin-bottom: 8px;
+            font-family: 'Libre Franklin', sans-serif;
+            font-size: 0.85em;
+            color: #444;
+            padding-left: 15px;
+            position: relative;
+        }
+
+        .about-list li::before {
+            content: '■';
+            color: #1a1a1a;
+            font-size: 0.8em;
+            position: absolute;
+            left: 0;
+            top: 2px;
+        }
+
+        .about-list strong {
+            color: #1a1a1a;
+            font-weight: 700;
+        }
+
+        /* ========================================
+           PRIORITY QUEUE (MIN HEAP) STYLES
+        ======================================== */
+        .section-title {
+            font-family: 'Merriweather', serif;
+            font-size: 1.5em;
             font-weight: 900;
             text-transform: uppercase;
             letter-spacing: 1px;
-            font-size: 0.9em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px double #1a1a1a;
+            text-align: center;
         }
 
-        .op-details {
-            margin-top: 4px;
-            color: #666;
-            font-size: 0.9em;
+        .heap-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
 
-        .complexity-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            background: #1a1a1a;
-            color: #fff;
-            font-size: 0.8em;
+        .heap-items-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            min-height: 60px;
+            padding: 15px;
+            background: #f0ebe3;
+            border: 2px solid #1a1a1a;
+            border-radius: 4px;
+        }
+
+        .heap-item {
+            background: linear-gradient(135deg, #1a1a1a 0%, #333 100%);
+            color: #faf7f0;
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-family: 'Libre Franklin', sans-serif;
+            font-size: 0.85em;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 100px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .heap-item:first-child {
+            background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
+        }
+
+        .heap-item:first-child::before {
+            content: '⬆ ROOT';
+            position: absolute;
+            top: -18px;
+            left: 0;
+            font-size: 0.65em;
             font-weight: 700;
-            border-radius: 3px;
-            font-family: 'Courier New', monospace;
+            color: #c41e3a;
+            letter-spacing: 1px;
         }
 
-        @media (max-width: 1200px) {
-            .main-container {
-                grid-template-columns: 1fr;
+        .heap-item .code {
+            font-weight: 700;
+            font-size: 1em;
+        }
+
+        .heap-item .countdown {
+            font-size: 0.75em;
+            opacity: 0.9;
+        }
+
+        .heap-item.urgent {
+            animation: pulse-urgent 1s infinite;
+        }
+
+        @keyframes pulse-urgent {
+
+            0%,
+            100% {
+                box-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+            }
+
+            50% {
+                box-shadow: 0 0 15px rgba(255, 0, 0, 0.8);
             }
         }
 
-        @media (max-width: 768px) {
-            .container {
-                padding: 25px 20px;
-            }
+        .heap-empty {
+            color: #999;
+            font-style: italic;
+            width: 100%;
+            text-align: center;
+            padding: 20px;
+        }
 
-            h1 {
-                font-size: 2em;
-            }
+        .heap-stats {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
 
-            .toggle-container {
-                flex-direction: column;
-            }
+        .heap-stat {
+            background: #f0ebe3;
+            border: 2px solid #1a1a1a;
+            padding: 10px 15px;
+            flex: 1;
+            text-align: center;
+        }
 
-            .toggle-btn {
-                border-right: none;
-                border-bottom: 2px solid #1a1a1a;
-            }
+        .heap-stat-label {
+            font-size: 0.7em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #666;
+            margin-bottom: 4px;
+        }
 
-            .toggle-btn:last-child {
-                border-bottom: none;
-            }
+        .heap-stat-value {
+            font-family: 'Merriweather', serif;
+            font-size: 1.4em;
+            font-weight: 900;
+            color: #1a1a1a;
+        }
 
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
+        /* Heap Operation Log Styles */
+        .op-heap_insert .op-title {
+            color: #17a2b8;
+        }
+
+        .operation.op-heap_insert {
+            border-left-color: #17a2b8;
+            background: linear-gradient(90deg, rgba(23, 162, 184, 0.1) 0%, #fff 15%);
+        }
+
+        .op-heap_extract .op-title {
+            color: #e83e8c;
+        }
+
+        .operation.op-heap_extract {
+            border-left-color: #e83e8c;
+            background: linear-gradient(90deg, rgba(232, 62, 140, 0.1) 0%, #fff 15%);
+        }
+
+        .op-ttl_expired .op-title {
+            color: #dc3545;
+        }
+
+        .operation.op-ttl_expired {
+            border-left-color: #dc3545;
+            background: linear-gradient(90deg, rgba(220, 53, 69, 0.1) 0%, #fff 15%);
         }
     </style>
 </head>
+
 <body>
     <div class="main-container">
-        <div class="container" style="position: relative;">
-            <div class="header">
-                <div class="logo">
-                    <span class="logo-icon">📰</span>
-                </div>
-                <h1>The Link Press</h1>
-                <p class="subtitle">Condensing URLs Since Today</p>
-            </div>
-
-            <div class="toggle-container">
-                <button class="toggle-btn active" id="simpleBtn">Standard</button>
-                <button class="toggle-btn" id="customBtn">Custom Edition</button>
-            </div>
-
-            <div id="formSection">
-                <div class="input-group">
-                    <label for="urlInput">Original URL</label>
-                    <input type="text" id="urlInput" placeholder="https://example.com/very/long/url">
+        <!-- TOP SECTION: Form (Full Width but centered max-width) -->
+        <div class="form-section-container">
+            <div class="container" style="position: relative;">
+                <div class="header">
+                    <div class="logo"><span class="logo-icon">📰</span></div>
+                    <h1>The Link Press</h1>
+                    <p class="subtitle">Condensing URLs Since Today</p>
                 </div>
 
-                <div class="input-group custom-alias" id="customAliasSection">
-                    <label for="aliasInput">Custom Alias</label>
-                    <input type="text" id="aliasInput" placeholder="my-custom-link">
+                <div class="toggle-container">
+                    <button class="toggle-btn active" id="simpleBtn">Standard</button>
+                    <button class="toggle-btn" id="customBtn">Custom Edition</button>
                 </div>
 
-                <div class="checkbox-group">
-                    <input type="checkbox" id="enableExpiry">
-                    <label for="enableExpiry">Set Link Expiration Date</label>
-                </div>
+                <div id="formSection">
+                    <div class="input-group">
+                        <label for="urlInput">Original URL</label>
+                        <input type="text" id="urlInput" placeholder="https://example.com/very/long/url">
+                    </div>
 
-                <div class="input-group expiry-section" id="expirySection">
-                    <label>Expiration Method</label>
-                    <select id="expiryType">
-                        <option value="time">Expire After Time Period</option>
-                        <option value="clicks">Expire After Click Count</option>
-                    </select>
+                    <div class="input-group custom-alias" id="customAliasSection">
+                        <label for="aliasInput">Custom Alias</label>
+                        <input type="text" id="aliasInput" placeholder="my-custom-link">
+                    </div>
 
-                    <div class="expiry-option" id="timeExpiry" style="margin-top: 12px;">
-                        <input type="number" id="expiryValue" placeholder="Duration" min="1">
-                        <select id="timeUnit">
-                            <option value="minutes">Minutes</option>
-                            <option value="hours">Hours</option>
-                            <option value="days">Days</option>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="forceNewLink">
+                        <label for="forceNewLink">Create new link even if URL already exists</label>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="enableExpiry">
+                        <label for="enableExpiry">Set Link Expiration Date</label>
+                    </div>
+
+                    <div class="input-group expiry-section" id="expirySection">
+                        <label>Expiration Method</label>
+                        <select id="expiryType">
+                            <option value="time">Expire After Time Period</option>
+                            <option value="clicks">Expire After Click Count</option>
                         </select>
+
+                        <div class="expiry-option" id="timeExpiry" style="margin-top: 12px;">
+                            <input type="number" id="expiryValue" placeholder="Duration" min="1">
+                            <select id="timeUnit">
+                                <option value="minutes">Minutes</option>
+                                <option value="hours">Hours</option>
+                                <option value="days">Days</option>
+                            </select>
+                        </div>
+
+                        <div class="expiry-option" id="clickExpiry" style="margin-top: 12px; display: none;">
+                            <input type="number" id="maxClicks" placeholder="Maximum clicks" min="1">
+                        </div>
                     </div>
 
-                    <div class="expiry-option" id="clickExpiry" style="margin-top: 12px; display: none;">
-                        <input type="number" id="maxClicks" placeholder="Maximum clicks" min="1">
+                    <button class="btn" id="shortenBtn">Publish Short Link</button>
+                    <div class="error" id="errorMsg"></div>
+                </div>
+
+                <div class="result" id="resultSection">
+                    <div class="result-label">Published Short Link:</div>
+                    <div class="result-url">
+                        <a href="" target="_blank" id="shortUrl"></a>
+                        <button class="copy-btn" id="copyBtn">Copy</button>
+                    </div>
+                    <div class="expiry-info" id="expiryInfo" style="display: none;"></div>
+                    <button class="new-btn" id="newBtn">Create New Edition</button>
+                </div>
+            </div>
+
+
+            <!-- BOTTOM SECTION: Side-by-Side Visualizations -->
+            <div class="visualizations-row">
+                <!-- HASHMAP (LRU Cache) COLUMN -->
+                <div class="container" style="position: relative;">
+                    <div class="section-title">#️⃣ HashMap Implementation — LRU Cache</div>
+
+                    <div class="cache-container">
+                        <div class="cache-label-row">
+                            <span>Cache Memory (LRU)</span>
+                            <span id="cacheSizeDisplay">0/5 SLOTS</span>
+                        </div>
+                        <!-- DYNAMIC CACHE BLOCKS -->
+                        <div class="cache-blocks" id="cacheBlocks">
+                            <div class="cache-block empty">EMPTY</div>
+                            <div class="cache-block empty">EMPTY</div>
+                            <div class="cache-block empty">EMPTY</div>
+                            <div class="cache-block empty">EMPTY</div>
+                            <div class="cache-block empty">EMPTY</div>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Hit Rate (Efficient)</div>
+                            <div class="stat-value" style="color: #28a745;" id="hitRate">0%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Miss Rate (Query)</div>
+                            <div class="stat-value" style="color: #dc3545;" id="missRate">0%</div>
+                        </div>
+                    </div>
+
+                    <div
+                        style="margin-bottom: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; font-size: 0.85em; font-family: 'Merriweather', serif; margin-top: 20px;">
+                        Operational Log:
+                    </div>
+
+                    <div class="operations-feed" id="operationsFeed">
+                        <div style="text-align: center; color: #999; padding: 40px;">
+                            <i>Waiting for incoming requests...</i>
+                        </div>
+                    </div>
+
+                    <!-- ABOUT HASHMAP SECTION -->
+                    <div class="about-project">
+                        <div class="about-title">ABOUT HASHMAP</div>
+
+                        <div class="about-subtitle">WHY HASHMAP?</div>
+                        <div class="about-text">
+                            Standard Database queries are too slow for high-speed redirection. A
+                            <strong>HashMap</strong> provides <strong>O(1) Constant Time</strong> access.
+                        </div>
+
+                        <div class="about-subtitle" style="color:#1a1a1a; font-size:0.85em; margin-bottom: 8px;">
+                            OPERATIONS:</div>
+                        <ul class="about-list">
+                            <li><strong>PUT (Set):</strong> Adds links to RAM Cache.</li>
+                            <li><strong>GET (Hit):</strong> Instantly fetches without touching DB.</li>
+                            <li><strong>DELETE (Eviction):</strong> Removes "Least Recently Used" (LRU) item.</li>
+                            <li><strong>Reverse Lookup:</strong> Checks if a URL already exists.</li>
+                        </ul>
                     </div>
                 </div>
 
-                <button class="btn" id="shortenBtn">Publish Short Link</button>
+                <!-- PRIORITY QUEUE (Min Heap) COLUMN -->
+                <div class="container" style="position: relative;">
+                    <div class="section-title">⏰ Priority Queue — TTL Management</div>
 
-                <div class="error" id="errorMsg"></div>
-            </div>
+                    <div class="heap-container">
+                        <div class="heap-stats">
+                            <div class="heap-stat">
+                                <div class="heap-stat-label">Queue Size</div>
+                                <div class="heap-stat-value" id="heapSize">0</div>
+                            </div>
+                            <div class="heap-stat">
+                                <div class="heap-stat-label">Next Expiry</div>
+                                <div class="heap-stat-value" id="nextExpiry">—</div>
+                            </div>
+                        </div>
 
-            <div class="result" id="resultSection">
-                <div class="result-label">Published Short Link:</div>
-                <div class="result-url">
-                    <a href="" target="_blank" id="shortUrl"></a>
-                    <button class="copy-btn" id="copyBtn">Copy</button>
-                </div>
+                        <div
+                            style="margin-bottom: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; font-size: 0.85em; font-family: 'Merriweather', serif;">
+                            Expiration Queue (Sorted by Time):
+                        </div>
 
-                <div class="expiry-info" id="expiryInfo" style="display: none;"></div>
+                        <div class="heap-items-container" id="heapItems">
+                            <div class="heap-empty">No time-expiring links in queue</div>
+                        </div>
 
-                <button class="new-btn" id="newBtn">Create New Edition</button>
-            </div>
-        </div>
+                        <div
+                            style="margin-bottom: 10px; margin-top: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; font-size: 0.85em; font-family: 'Merriweather', serif;">
+                            Heap Operations:
+                        </div>
 
-        <div class="container" style="position: relative;">
-            <div class="viz-header">
-                <div class="viz-title">HashMap Monitor</div>
-                <div class="live-indicator">
-                    <div class="live-dot"></div>
-                    LIVE
-                </div>
-            </div>
+                        <div class="operations-feed" id="heapOperationsFeed">
+                            <div style="text-align: center; color: #999; padding: 40px;">
+                                <i>Waiting for TTL links...</i>
+                            </div>
+                        </div>
 
-            <div class="cache-status">
-                <div class="cache-info">
-                    <span><strong>Cache Size:</strong> <span id="currentSize">0</span>/<span id="maxSize">5</span></span>
-                    <span><strong>Strategy:</strong> LRU</span>
-                </div>
-                <div class="cache-bar">
-                    <div class="cache-fill" id="cacheFill" style="width: 0%"></div>
-                </div>
-            </div>
+                        <!-- About Priority Queue -->
+                        <div class="about-project">
+                            <div class="about-title">ABOUT MIN HEAP</div>
 
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">Hit Rate</div>
-                    <div class="stat-value" style="color: #28a745;" id="hitRate">0%</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Miss Rate</div>
-                    <div class="stat-value" style="color: #dc3545;" id="missRate">0%</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Avg Hit Time</div>
-                    <div class="stat-value" style="color: #28a745;" id="avgHit">0ms</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Avg Miss Time</div>
-                    <div class="stat-value" style="color: #dc3545;" id="avgMiss">0ms</div>
-                </div>
-            </div>
+                            <div class="about-subtitle">WHY MIN HEAP?</div>
+                            <div class="about-text">
+                                Efficiently tracks which link expires next. Root contains the
+                                <strong>earliest-expiring</strong> link.
+                            </div>
 
-            <div style="margin-bottom: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; font-size: 0.85em; font-family: 'Merriweather', serif;">
-                Recent Operations:
-            </div>
+                            <div class="about-subtitle" style="color:#1a1a1a; font-size:0.85em; margin-bottom: 8px;">
+                                OPERATIONS:</div>
+                            <ul class="about-list">
+                                <li><strong>Insert (O(log n)):</strong> Adds TTL links to queue.</li>
+                                <li><strong>Extract-Min (O(log n)):</strong> Removes expired root.</li>
+                            </ul>
 
-            <div class="operations-feed" id="operationsFeed">
-                <div style="text-align: center; color: #999; padding: 20px;">
-                    Waiting for operations...
+                            <div class="about-subtitle">PROACTIVE CLEANUP:</div>
+                            <div class="about-text" style="font-style: italic;">
+                                Background job checks the root every 5s. If expired, it's auto-deleted!
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+        <script>
+            const API_URL = 'http://localhost:3000';
 
-    <script>
-        const API_URL = 'https://tin.up.railway.app';
-
-        // Form Elements
-        const simpleBtn = document.getElementById('simpleBtn');
-        const customBtn = document.getElementById('customBtn');
-        const customAliasSection = document.getElementById('customAliasSection');
-        const shortenBtn = document.getElementById('shortenBtn');
-        const urlInput = document.getElementById('urlInput');
-        const aliasInput = document.getElementById('aliasInput');
-        const formSection = document.getElementById('formSection');
-        const resultSection = document.getElementById('resultSection');
-        const shortUrl = document.getElementById('shortUrl');
-        const copyBtn = document.getElementById('copyBtn');
-        const newBtn = document.getElementById('newBtn');
-        const errorMsg = document.getElementById('errorMsg');
-        const enableExpiry = document.getElementById('enableExpiry');
-        const expirySection = document.getElementById('expirySection');
-        const expiryType = document.getElementById('expiryType');
-        const timeExpiry = document.getElementById('timeExpiry');
-        const clickExpiry = document.getElementById('clickExpiry');
-        const expiryInfo = document.getElementById('expiryInfo');
-
-        // Visualization Elements
-        const operationsFeed = document.getElementById('operationsFeed');
-        const currentSize = document.getElementById('currentSize');
-        const maxSize = document.getElementById('maxSize');
-        const cacheFill = document.getElementById('cacheFill');
-        const hitRate = document.getElementById('hitRate');
-        const missRate = document.getElementById('missRate');
-        const avgHit = document.getElementById('avgHit');
-        const avgMiss = document.getElementById('avgMiss');
-
-        let isCustomMode = false;
-
-        // Form Handlers
-        simpleBtn.addEventListener('click', () => {
-            isCustomMode = false;
-            simpleBtn.classList.add('active');
-            customBtn.classList.remove('active');
-            customAliasSection.classList.remove('show');
-            errorMsg.classList.remove('show');
-        });
-
-        customBtn.addEventListener('click', () => {
-            isCustomMode = true;
-            customBtn.classList.add('active');
-            simpleBtn.classList.remove('active');
-            customAliasSection.classList.add('show');
-            errorMsg.classList.remove('show');
-        });
-
-        enableExpiry.addEventListener('change', () => {
-            if (enableExpiry.checked) {
-                expirySection.classList.add('show');
-            } else {
-                expirySection.classList.remove('show');
-            }
-        });
-
-        expiryType.addEventListener('change', () => {
-            if (expiryType.value === 'time') {
-                timeExpiry.style.display = 'flex';
-                clickExpiry.style.display = 'none';
-            } else {
-                timeExpiry.style.display = 'none';
-                clickExpiry.style.display = 'flex';
-            }
-        });
-
-        function normalizeUrl(url) {
-            url = url.trim();
-            if (!url) return null;
-            if (!url.match(/^https?:\/\//i)) {
-                if (url.startsWith('www.')) {
-                    url = 'http://' + url;
-                } else if (!url.includes('://')) {
-                    url = 'http://' + url;
-                }
-            }
-            return url;
-        }
-
-        function showError(message) {
-            errorMsg.textContent = message;
-            errorMsg.classList.add('show');
-            setTimeout(() => {
-                errorMsg.classList.remove('show');
-            }, 4000);
-        }
-
-        shortenBtn.addEventListener('click', async () => {
-            const url = normalizeUrl(urlInput.value);
-
-            if (!url) {
-                showError('A valid URL is required');
-                return;
+            // Mask Helper
+            function maskKey(key) {
+                if (!key || key.length <= 3) return key;
+                return key.slice(0, -3) + '***';
             }
 
-            const alias = isCustomMode ? aliasInput.value.trim() : '';
+            // Form Elements
+            const simpleBtn = document.getElementById('simpleBtn');
+            const customBtn = document.getElementById('customBtn');
+            const customAliasSection = document.getElementById('customAliasSection');
+            const shortenBtn = document.getElementById('shortenBtn');
+            const urlInput = document.getElementById('urlInput');
+            const aliasInput = document.getElementById('aliasInput');
 
-            if (isCustomMode && !alias) {
-                showError('Custom alias is required');
-                return;
-            }
+            // ... [Previous Event Listeners Code] ...
 
-            const requestBody = { url, alias };
-
-            if (enableExpiry.checked) {
-                if (expiryType.value === 'time') {
-                    const value = parseInt(document.getElementById('expiryValue').value);
-                    const unit = document.getElementById('timeUnit').value;
-
-                    if (!value || value <= 0) {
-                        showError('Invalid expiration time');
-                        return;
-                    }
-
-                    requestBody.expiryType = 'time';
-                    requestBody.expiryValue = value;
-                    requestBody.expiryUnit = unit;
-                } else {
-                    const maxClicks = parseInt(document.getElementById('maxClicks').value);
-
-                    if (!maxClicks || maxClicks <= 0) {
-                        showError('Invalid click count');
-                        return;
-                    }
-
-                    requestBody.expiryType = 'clicks';
-                    requestBody.maxClicks = maxClicks;
+            // Helper: Friendly Text for Operations
+            function getOperationInfo(op) {
+                switch (op.type) {
+                    case 'HIT': return {
+                        title: 'Cache Hit',
+                        desc: 'Found instantly in O(1) Memory Cache',
+                        class: 'op-hit'
+                    };
+                    case 'MISS': return {
+                        title: 'Cache Miss',
+                        desc: 'Not in memory. Querying Database... (Slower)',
+                        class: 'op-miss'
+                    };
+                    case 'SET': return {
+                        title: 'Memory Allocation',
+                        desc: 'Storing link in fast access memory layer',
+                        class: 'op-set'
+                    };
+                    case 'EVICT': return {
+                        title: 'Cache Eviction',
+                        desc: 'Memory full. Removing least recently used item',
+                        class: 'op-evict'
+                    };
+                    case 'EXPIRED': return {
+                        title: 'Link Expired',
+                        desc: `Deletion Triggered: ${op.details || 'Time Limit Reached'}.`,
+                        class: 'op-expired'
+                    };
+                    case 'DEDUP': return {
+                        title: 'Deduplication',
+                        desc: 'Reverse lookup found existing short link for this URL',
+                        class: 'op-dedup'
+                    };
+                    default: return { title: op.type, desc: 'Unknown Operation', class: '' };
                 }
             }
 
-            try {
-                const response = await fetch(`${API_URL}/shorten`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(requestBody),
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    const shortLink = `${API_URL}/${data.shortCode}`;
-                    shortUrl.href = shortLink;
-                    shortUrl.textContent = shortLink;
-                    formSection.style.display = 'none';
-                    resultSection.classList.add('show');
-
-                    if (data.expiryType) {
-                        expiryInfo.style.display = 'block';
-
-                        if (data.expiryType === 'time') {
-                            expiryInfo.innerHTML = `This link expires on ${new Date(data.expiresAt).toLocaleString()}`;
-                        } else if (data.expiryType === 'clicks') {
-                            expiryInfo.innerHTML = `This link expires after ${data.maxClicks} clicks`;
-                        }
-                    }
-                } else {
-                    showError(data.error || 'Publication failed');
-                }
-            } catch (error) {
-                showError('Unable to connect to service');
-            }
-        });
-
-        copyBtn.addEventListener('click', () => {
-            navigator.clipboard.writeText(shortUrl.textContent);
-            copyBtn.textContent = '✓ Copied';
-            copyBtn.classList.add('copied');
-            setTimeout(() => {
-                copyBtn.textContent = 'Copy';
-                copyBtn.classList.remove('copied');
-            }, 2000);
-        });
-
-        newBtn.addEventListener('click', () => {
-            urlInput.value = '';
-            aliasInput.value = '';
-            document.getElementById('expiryValue').value = '';
-            document.getElementById('maxClicks').value = '';
-            enableExpiry.checked = false;
-            expirySection.classList.remove('show');
-            formSection.style.display = 'block';
-            resultSection.classList.remove('show');
-            errorMsg.classList.remove('show');
-            expiryInfo.style.display = 'none';
-        });
-
-        // Live Operations Feed
-        const eventSource = new EventSource(`${API_URL}/live-operations`);
-
-        eventSource.onmessage = (event) => {
-            const operations = JSON.parse(event.data);
-            
-            if (operations.length > 0) {
-                // Clear placeholder
-                if (operationsFeed.querySelector('div[style*="text-align: center"]')) {
-                    operationsFeed.innerHTML = '';
-                }
-                
-                // Display operations
-                operations.slice().reverse().forEach(op => {
-                    displayOperation(op);
-                });
-                
-                // Update stats
-                updateStats();
-            }
-        };
-
-        eventSource.onerror = () => {
-            console.log('EventSource connection lost, will reconnect...');
-        };
-
-        function displayOperation(op) {
-            // Check if operation already exists
-            const existingOp = document.querySelector(`[data-timestamp="${op.timestamp}"]`);
-            if (existingOp) return;
-
-            const opDiv = document.createElement('div');
-            opDiv.className = `operation ${op.type.toLowerCase()}`;
-            opDiv.setAttribute('data-timestamp', op.timestamp);
-
-            let emoji = '';
-            let typeText = '';
-            
-            if (op.type === 'HIT') {
-                emoji = '🟢';
-                typeText = 'Cache HIT';
-            } else if (op.type === 'MISS') {
-                emoji = '🔴';
-                typeText = 'Cache MISS';
-            } else if (op.type === 'SET') {
-                emoji = '🔵';
-                typeText = 'Cache SET';
-            } else if (op.type === 'EVICT') {
-                emoji = '🗑️';
-                typeText = 'LRU Eviction';
-            }
-        
-            opDiv.innerHTML = `
-                <div class="op-type">${emoji} ${typeText}</div>
-                <div class="op-details">
-                    Key: <strong>${op.key || 'N/A'}</strong> • 
-                    Time: <strong>${op.time}ms</strong> • 
-                    <span class="complexity-badge">${op.complexity}</span> •
-                    Cache: ${op.cacheSize}/${maxSize.textContent}
+            function renderOperations(logs) {
+                operationsFeed.innerHTML = logs.map(op => {
+                    const info = getOperationInfo(op);
+                    const maskedKey = maskKey(op.key); // Apply Mask
+                    return `
+                <div class="operation ${info.class}">
+                    <div class="op-header">
+                        <span class="op-title">${info.title}</span>
+                        <span class="complexity-tag">${op.complexity || 'N/A'}</span>
+                    </div>
+                    <div class="op-desc">${info.desc}</div>
+                    <div class="op-meta">
+                        <span>Key: ${maskedKey}</span> • <span>${op.time}ms</span>
+                    </div>
                 </div>
             `;
-
-            operationsFeed.insertBefore(opDiv, operationsFeed.firstChild);
-
-            // Keep only last 20 operations
-            while (operationsFeed.children.length > 20) {
-                operationsFeed.removeChild(operationsFeed.lastChild);
+                }).reverse().join('');
             }
-        }
 
-        function updateStats() {
-            fetch(`${API_URL}/cache-stats`)
-                .then(res => res.json())
-                .then(stats => {
-                    currentSize.textContent = stats.cacheSize;
-                    maxSize.textContent = stats.maxCacheSize;
-                    
-                    const fillPercent = (stats.cacheSize / stats.maxCacheSize) * 100;
-                    cacheFill.style.width = `${fillPercent}%`;
-                    
-                    hitRate.textContent = `${stats.hitRate}%`;
-                    missRate.textContent = `${(100 - stats.hitRate).toFixed(1)}%`;
-                    avgHit.textContent = `${stats.avgHitTime}ms`;
-                    avgMiss.textContent = `${stats.avgMissTime}ms`;
-                })
-                .catch(err => console.error('Stats error:', err));
-        }
+            function renderCacheBlocks(keys, maxSize) {
+                cacheSizeDisplay.textContent = `${keys.length}/${maxSize} SLOTS`;
 
-        // Update stats every 2 seconds
-        setInterval(updateStats, 2000);
-        updateStats();
-    </script>
+                // Create 5 blocks
+                let html = '';
+                for (let i = 0; i < maxSize; i++) {
+                    if (i < keys.length) {
+                        // Filled Slot
+                        const maskedKey = maskKey(keys[i]); // Apply Mask
+                        html += `<div class="cache-block filled" title="${maskedKey}">${maskedKey}</div>`;
+                    } else {
+                        // Empty Slot
+                        html += `<div class="cache-block empty">EMPTY</div>`;
+                    }
+                }
+                cacheBlocks.innerHTML = html;
+            }
+
+            // ========================================
+            // PRIORITY QUEUE (HEAP) RENDERING
+            // ========================================
+            const heapItemsContainer = document.getElementById('heapItems');
+            const heapSizeDisplay = document.getElementById('heapSize');
+            const nextExpiryDisplay = document.getElementById('nextExpiry');
+            const heapOperationsFeed = document.getElementById('heapOperationsFeed');
+
+            function getHeapOperationInfo(op) {
+                switch (op.type) {
+                    case 'HEAP_INSERT': return {
+                        title: 'Heap Insert',
+                        desc: `Added to TTL queue. ${op.details || ''}`,
+                        class: 'op-heap_insert'
+                    };
+                    case 'HEAP_EXTRACT': return {
+                        title: 'Heap Extract-Min',
+                        desc: 'TTL Expired — Removed from priority queue root',
+                        class: 'op-heap_extract'
+                    };
+                    case 'TTL_EXPIRED': return {
+                        title: 'Link Expired',
+                        desc: 'Time Limit Reached (Priority Queue Cleaned)',
+                        class: 'op-ttl_expired'
+                    };
+                    default: return { title: op.type, desc: op.details || '', class: '' };
+                }
+            }
+
+            function renderHeapItems(items) {
+                if (!items || items.length === 0) {
+                    heapItemsContainer.innerHTML = '<div class="heap-empty">No time-expiring links in queue</div>';
+                    heapSizeDisplay.textContent = '0';
+                    nextExpiryDisplay.textContent = '—';
+                    return;
+                }
+
+                heapSizeDisplay.textContent = items.length;
+
+                // Next expiry countdown
+                const nextItem = items[0];
+                if (nextItem) {
+                    const timeLeft = nextItem.timeLeft;
+                    if (timeLeft <= 0) {
+                        nextExpiryDisplay.textContent = 'NOW!';
+                    } else if (timeLeft < 60) {
+                        nextExpiryDisplay.textContent = `${timeLeft}s`;
+                    } else {
+                        nextExpiryDisplay.textContent = `${Math.floor(timeLeft / 60)}m ${timeLeft % 60}s`;
+                    }
+                }
+
+                heapItemsContainer.innerHTML = items.map((item, index) => {
+                    const maskedCode = maskKey(item.shortCode);
+                    const urgentClass = item.timeLeft <= 10 ? 'urgent' : '';
+                    return `
+                    <div class="heap-item ${urgentClass}">
+                        <div class="code">${maskedCode}</div>
+                        <div class="countdown">${item.timeLeft}s left</div>
+                    </div>
+                `;
+                }).join('');
+            }
+
+            function renderHeapOperations(logs) {
+                if (!logs || logs.length === 0) {
+                    heapOperationsFeed.innerHTML = '<div style="text-align: center; color: #999; padding: 40px;"><i>Create a time-expiring link to see heap operations...</i></div>';
+                    return;
+                }
+
+                heapOperationsFeed.innerHTML = logs.map(op => {
+                    const info = getHeapOperationInfo(op);
+                    const maskedKey = maskKey(op.key);
+                    return `
+                <div class="operation ${info.class}">
+                    <div class="op-header">
+                        <span class="op-title">${info.title}</span>
+                        <span class="complexity-tag">${op.complexity || 'N/A'}</span>
+                    </div>
+                    <div class="op-desc">${info.desc}</div>
+                    <div class="op-meta">
+                        <span>Key: ${maskedKey}</span> • <span>${op.time}ms</span>
+                    </div>
+                </div>
+            `;
+                }).reverse().join('');
+            }
+
+            // Form Elements & Visualization already declared above
+
+            const formSection = document.getElementById('formSection');
+            const resultSection = document.getElementById('resultSection');
+            const shortUrl = document.getElementById('shortUrl');
+            const copyBtn = document.getElementById('copyBtn');
+            const newBtn = document.getElementById('newBtn');
+            const errorMsg = document.getElementById('errorMsg');
+            const enableExpiry = document.getElementById('enableExpiry');
+            const expirySection = document.getElementById('expirySection');
+            const expiryType = document.getElementById('expiryType');
+            const timeExpiry = document.getElementById('timeExpiry');
+            const clickExpiry = document.getElementById('clickExpiry');
+            const expiryInfo = document.getElementById('expiryInfo');
+
+            // Visualization Elements
+            const operationsFeed = document.getElementById('operationsFeed');
+            const cacheBlocks = document.getElementById('cacheBlocks');
+            const cacheSizeDisplay = document.getElementById('cacheSizeDisplay');
+            const hitRate = document.getElementById('hitRate');
+            const missRate = document.getElementById('missRate');
+
+            let isCustomMode = false;
+
+            // Form Toggle Logic
+            simpleBtn.addEventListener('click', () => {
+                isCustomMode = false;
+                simpleBtn.classList.add('active');
+                customBtn.classList.remove('active');
+                customAliasSection.classList.remove('show');
+                errorMsg.classList.remove('show');
+            });
+
+            customBtn.addEventListener('click', () => {
+                isCustomMode = true;
+                customBtn.classList.add('active');
+                simpleBtn.classList.remove('active');
+                customAliasSection.classList.add('show');
+                errorMsg.classList.remove('show');
+            });
+
+            // ... [Checkboxes] ... 
+            enableExpiry.addEventListener('change', () => {
+                expirySection.classList.toggle('show', enableExpiry.checked);
+            });
+
+            expiryType.addEventListener('change', () => {
+                if (expiryType.value === 'time') {
+                    timeExpiry.style.display = 'flex';
+                    clickExpiry.style.display = 'none';
+                } else {
+                    timeExpiry.style.display = 'none';
+                    clickExpiry.style.display = 'flex';
+                }
+            });
+
+
+            function updateStats() {
+                fetch(`${API_URL}/cache-stats`)
+                    .then(res => res.json())
+                    .then(data => {
+                        hitRate.textContent = data.hitRate + '%';
+                        const missRateVal = (100 - parseFloat(data.hitRate)).toFixed(1);
+                        missRate.textContent = (data.totalOperations > 0 ? missRateVal : 0) + '%';
+                    });
+            }
+
+            // Connect to Live Stream
+            const evtSource = new EventSource(`${API_URL}/live-operations`);
+
+            evtSource.onmessage = function (event) {
+                const data = JSON.parse(event.data);
+
+                // Render HashMap (LRU Cache) data
+                if (data.cacheKeys) {
+                    renderOperations(data.logs);
+                    renderCacheBlocks(data.cacheKeys, data.maxSize);
+                    hitRate.textContent = (data.logs.filter(l => l.type === 'HIT').length / Math.max(1, data.logs.length) * 100).toFixed(0) + '%';
+                    updateStats();
+                }
+
+                // Render Priority Queue (Heap) data
+                if (data.heapItems !== undefined) {
+                    renderHeapItems(data.heapItems);
+                    renderHeapOperations(data.heapLogs);
+                }
+            };
+
+            // ... [Initial Shorten Logic & normalizeUrl] ...
+            function normalizeUrl(url) {
+                url = url.trim();
+                if (!url) return null;
+                if (!url.match(/^https?:\/\//i)) {
+                    if (url.startsWith('www.')) {
+                        url = 'http://' + url;
+                    } else if (!url.includes('://')) {
+                        url = 'http://' + url;
+                    }
+                }
+                return url;
+            }
+
+            function showError(message) {
+                errorMsg.textContent = message;
+                errorMsg.classList.add('show');
+                setTimeout(() => {
+                    errorMsg.classList.remove('show');
+                }, 4000);
+            }
+
+            shortenBtn.addEventListener('click', async () => {
+                const url = normalizeUrl(urlInput.value);
+
+                if (!url) {
+                    showError('A valid URL is required');
+                    return;
+                }
+
+                const alias = isCustomMode ? aliasInput.value.trim() : '';
+                if (isCustomMode && !alias) {
+                    showError('Custom alias is required');
+                    return;
+                }
+
+                const requestBody = { url, alias };
+
+                // Check if user wants to force new link (skip deduplication)
+                const forceNewCheckbox = document.getElementById('forceNewLink');
+                if (forceNewCheckbox.checked) {
+                    requestBody.forceNew = true;
+                }
+
+                if (enableExpiry.checked) {
+                    requestBody.expiryType = expiryType.value;
+                    if (expiryType.value === 'time') {
+                        const val = document.getElementById('expiryValue').value;
+                        if (!val) { showError('Please enter duration'); return; }
+                        requestBody.expiryValue = parseInt(val);
+                        requestBody.expiryUnit = document.getElementById('timeUnit').value;
+                    } else {
+                        const val = document.getElementById('maxClicks').value;
+                        if (!val) { showError('Please enter max clicks'); return; }
+                        requestBody.maxClicks = val;
+                    }
+                }
+
+                try {
+                    const res = await fetch(`${API_URL}/shorten`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(requestBody)
+                    });
+
+                    const data = await res.json();
+
+                    if (!res.ok) throw new Error(data.error || 'Something went wrong');
+
+                    // Show Result
+                    shortUrl.href = data.shortUrl;
+                    shortUrl.textContent = data.shortUrl;
+                    resultSection.classList.add('show');
+                    formSection.style.display = 'none';
+
+                    // Show dedup indicator if applicable
+                    if (data.deduplicated) {
+                        expiryInfo.style.display = 'block';
+                        expiryInfo.textContent = '🔄 Reused existing short link (Deduplication)';
+                    } else if (data.expiryType) {
+                        expiryInfo.style.display = 'block';
+                        if (data.expiryType === 'time') {
+                            expiryInfo.textContent = `Expires at: ${new Date(data.expiresAt).toLocaleString()}`;
+                        } else {
+                            expiryInfo.textContent = `Expires after: ${data.maxClicks} clicks`;
+                        }
+                    } else {
+                        expiryInfo.style.display = 'none';
+                    }
+
+                } catch (err) {
+                    showError(err.message);
+                }
+            });
+
+            newBtn.addEventListener('click', () => {
+                resultSection.classList.remove('show');
+                formSection.style.display = 'block';
+                aliasInput.value = '';
+                urlInput.value = '';
+            });
+
+            copyBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(shortUrl.href);
+                copyBtn.textContent = 'Copied!';
+                copyBtn.classList.add('copied');
+                setTimeout(() => {
+                    copyBtn.textContent = 'Copy';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            });
+        </script>
+
 </body>
+
 </html>
