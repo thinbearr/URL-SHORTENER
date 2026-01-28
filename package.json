@@ -1,0 +1,12 @@
+{
+    "name": "url-shortener-fullstack",
+    "version": "1.0.0",
+    "description": "Root package for deployment",
+    "scripts": {
+        "start": "cd Backend && node server.js",
+        "build": "cd Backend && npm install"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    }
+}

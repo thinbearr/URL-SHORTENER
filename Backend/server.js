@@ -8,6 +8,8 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(express.json());
+const path = require('path');
+app.use(express.static(path.join(__dirname, '../Frontend')));
 
 // CORS Configuration
 app.use((req, res, next) => {
@@ -292,7 +294,7 @@ function isExpired(urlData) {
 }
 
 // Routes
-app.get('/', (req, res) => {
+app.get('/api/status', (req, res) => {
     res.json({
         status: 'active',
         message: 'URL Shortener API with LRU Cache',
