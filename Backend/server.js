@@ -435,8 +435,8 @@ app.post('/shorten', async (req, res) => {
         const newUrl = new Url(urlData);
         await newUrl.save();
 
-        // Add to cache
-        addToCache(shortCode, url);
+        // Removed addToCache(shortCode, url) to implement lazy caching.
+        // The link will only be added to cache when it is first accessed (visited).
 
         // If time-based expiry, add to Priority Queue (Min Heap) for proactive TTL management
         if (urlData.expiryType === 'time' && urlData.expiresAt) {
