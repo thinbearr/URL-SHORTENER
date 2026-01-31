@@ -460,66 +460,111 @@
             animation: pulse 2s infinite;
         }
 
-        /* CACHE BLOCKS UI */
-        .cache-container {
-            margin-bottom: 25px;
-            background: #ffffff;
-            border: 3px solid #1a1a1a;
-            padding: 20px;
+        /* HASH TABLE VISUALIZATION (Buckets + Chaining) */
+        .hash-table-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            font-family: 'Libre Franklin', sans-serif;
+            background: #fff;
+            padding: 15px;
+            border: 2px solid #1a1a1a;
+        }
+
+        .bucket-row {
+            display: flex;
+            align-items: center;
+            height: 50px;
             position: relative;
         }
 
-        .cache-label-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 15px;
-            font-family: 'Merriweather', serif;
-            font-weight: 700;
-            font-size: 0.9em;
-            text-transform: uppercase;
-        }
-
-        .cache-blocks {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
-            height: 60px;
-        }
-
-        .cache-block {
-            border: 2px solid #1a1a1a;
-            background: #f0f0f0;
+        /* The Index Box (0, 1, 2...) */
+        .bucket-index {
+            width: 40px;
+            height: 40px;
+            background: #1a1a1a;
+            color: #fff;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-weight: 700;
-            font-family: 'Libre Franklin', sans-serif;
-            font-size: 0.8em;
-            color: #aaa;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-weight: 900;
+            font-size: 1.1em;
+            margin-right: 20px;
             position: relative;
-            overflow: hidden;
+            z-index: 2;
         }
 
-        .cache-block.filled {
-            background: #1a1a1a;
-            color: #fff;
-            border-color: #1a1a1a;
+        /* The Arrow connector */
+        .bucket-index::after {
+            content: '→';
+            position: absolute;
+            right: -18px;
+            top: 50%;
+            transform: translateY(-56%);
+            color: #1a1a1a;
+            font-weight: 900;
+            font-size: 1.2em;
+        }
+
+        /* Container for the Linked List items */
+        .bucket-chain {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+        }
+
+        /* The Data Node */
+        .chain-node {
+            background: #faf7f0;
+            border: 2px solid #1a1a1a;
+            padding: 5px 10px;
+            font-size: 0.85em;
+            font-weight: 700;
+            color: #1a1a1a;
+            position: relative;
+            min-width: 80px;
+            text-align: center;
             box-shadow: 3px 3px 0 rgba(196, 30, 58, 0.2);
+            animation: slideInRight 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        .cache-block.filled::after {
+        .chain-node.active-hit {
+            background: #d4edda;
+            border-color: #28a745;
+            box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+            transform: scale(1.1);
+            transition: all 0.2s;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Pointer to next node */
+        .chain-node:not(:last-child)::after {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: #c41e3a;
+            right: -15px;
+            top: 50%;
+            width: 15px;
+            height: 2px;
+            background: #1a1a1a;
         }
 
-        .cache-block.empty {
-            background-image: repeating-linear-gradient(45deg, #f0f0f0, #f0f0f0 10px, #e6e6e6 10px, #e6e6e6 20px);
+        .empty-bucket-text {
+            color: #ccc;
+            font-style: italic;
+            font-size: 0.8em;
+            letter-spacing: 1px;
         }
 
         /* STATS GRID */
@@ -998,16 +1043,12 @@
 
                     <div class="cache-container">
                         <div class="cache-label-row">
-                            <span>Cache Memory (LRU)</span>
-                            <span id="cacheSizeDisplay">0/5 SLOTS</span>
+                            <span>Hash Table (Buckets)</span>
+                            <span id="cacheSizeDisplay">Modulus: % 5</span>
                         </div>
-                        <!-- DYNAMIC CACHE BLOCKS -->
-                        <div class="cache-blocks" id="cacheBlocks">
-                            <div class="cache-block empty">EMPTY</div>
-                            <div class="cache-block empty">EMPTY</div>
-                            <div class="cache-block empty">EMPTY</div>
-                            <div class="cache-block empty">EMPTY</div>
-                            <div class="cache-block empty">EMPTY</div>
+                        <!-- DYNAMIC HASH TABLE VISUALIZATION -->
+                        <div class="hash-table-container" id="hashTableContainer">
+                            <!-- Buckets will be generated here -->
                         </div>
                     </div>
 
@@ -1191,22 +1232,53 @@
                 }).reverse().join('');
             }
 
-            function renderCacheBlocks(keys, maxSize) {
-                cacheSizeDisplay.textContent = `${keys.length}/${maxSize} SLOTS`;
+            // Hash Function for Visualization (consistent placement)
+            function getHashIndex(key, size) {
+                let hash = 0;
+                for (let i = 0; i < key.length; i++) {
+                    hash += key.charCodeAt(i);
+                }
+                return hash % size;
+            }
 
-                // Create 5 blocks
+            function renderHashTable(keys, maxSize) {
+                // Initialize buckets
+                const buckets = Array.from({ length: maxSize }, () => []);
+
+                // Distribute keys into buckets
+                keys.forEach(key => {
+                    const idx = getHashIndex(key, maxSize);
+                    buckets[idx].push(key);
+                });
+
+                // Generate HTML for Hash Table
                 let html = '';
                 for (let i = 0; i < maxSize; i++) {
-                    if (i < keys.length) {
-                        // Filled Slot
-                        const maskedKey = maskKey(keys[i]); // Apply Mask
-                        html += `<div class="cache-block filled" title="${maskedKey}">${maskedKey}</div>`;
+                    const bucketItems = buckets[i];
+
+                    // Build Chain HTML
+                    let chainHtml = '';
+                    if (bucketItems.length > 0) {
+                        chainHtml = bucketItems.map(k => {
+                            const masked = maskKey(k);
+                            return `<div class="chain-node" id="node-${k}" title="${k}">${masked}</div>`;
+                        }).join('');
                     } else {
-                        // Empty Slot
-                        html += `<div class="cache-block empty">EMPTY</div>`;
+                        chainHtml = '<span class="empty-bucket-text">NULL</span>';
                     }
+
+                    // Build Bucket Row
+                    html += `
+                        <div class="bucket-row">
+                            <div class="bucket-index">${i}</div>
+                            <div class="bucket-chain">
+                                ${chainHtml}
+                            </div>
+                        </div>
+                    `;
                 }
-                cacheBlocks.innerHTML = html;
+
+                hashTableContainer.innerHTML = html;
             }
 
             // ========================================
@@ -1314,7 +1386,7 @@
 
             // Visualization Elements
             const operationsFeed = document.getElementById('operationsFeed');
-            const cacheBlocks = document.getElementById('cacheBlocks');
+            const hashTableContainer = document.getElementById('hashTableContainer');
             const cacheSizeDisplay = document.getElementById('cacheSizeDisplay');
             const hitRate = document.getElementById('hitRate');
             const missRate = document.getElementById('missRate');
@@ -1373,7 +1445,7 @@
                 // Render HashMap (LRU Cache) data
                 if (data.cacheKeys) {
                     renderOperations(data.logs);
-                    renderCacheBlocks(data.cacheKeys, data.maxSize);
+                    renderHashTable(data.cacheKeys, data.maxSize);
                     hitRate.textContent = (data.logs.filter(l => l.type === 'HIT').length / Math.max(1, data.logs.length) * 100).toFixed(0) + '%';
                     updateStats();
                 }
