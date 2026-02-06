@@ -1356,11 +1356,17 @@
 
             function getHeapOperationInfo(op) {
                 switch (op.type) {
-                    case 'HEAP_INSERT': return {
-                        title: 'Heap Insert',
-                        desc: `Added to TTL queue. ${op.details || ''}`,
-                        class: 'op-heap_insert'
-                    };
+                    case 'HEAP_INSERT':
+                        let timeStr = op.details;
+                        try {
+                            // Convert UTC timestamp to Browser's Local Time
+                            timeStr = `Expires: ${new Date(op.details).toLocaleTimeString()}`;
+                        } catch (e) { }
+                        return {
+                            title: 'Heap Insert',
+                            desc: `Added to TTL queue. ${timeStr}`,
+                            class: 'op-heap_insert'
+                        };
                     case 'HEAP_EXTRACT': return {
                         title: 'Heap Extract-Min',
                         desc: 'TTL Expired — Removed from priority queue root',

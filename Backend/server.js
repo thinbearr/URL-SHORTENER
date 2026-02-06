@@ -82,7 +82,7 @@ class MinHeap {
         this.heap.push({ shortCode, expiresAt: new Date(expiresAt) });
         this.heapifyUp();
         const insertTime = (performance.now() - startTime).toFixed(2);
-        logHeapOperation('HEAP_INSERT', shortCode, insertTime, 'O(log n)', `Expires: ${new Date(expiresAt).toLocaleTimeString()}`);
+        logHeapOperation('HEAP_INSERT', shortCode, insertTime, 'O(log n)', expiresAt);
     }
 
     // O(log n) - Remove and return minimum
