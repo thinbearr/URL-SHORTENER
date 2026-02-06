@@ -387,7 +387,7 @@ app.post('/shorten', async (req, res) => {
             const baseUrl = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
 
             // Log the dedup operation
-            logOperation('DEDUP', existingUrl.shortCode, '0.00', 'O(1)', 'Reverse lookup found existing entry');
+            logOperation('DEDUP', existingUrl.shortCode, '', '', 'Reverse lookup found existing entry');
 
             console.log(`🔄 DEDUP: Reusing ${existingUrl.shortCode} for ${url}`);
 
